@@ -1,5 +1,5 @@
 $(document).ready( function() {
-    playGame()
+    gameController( new playGame() )
 })
 
 var GameFieldPosX = 20
@@ -231,39 +231,16 @@ function sprite(shape, $panel) {
     }
 
     sprite.prototype.fall = function(before, after) {
-        if( before != undefined ) {
-            before()
-        }
+        return this.move(0,1)
 
-        this.move(0,1)
-
-        if( after != undefined ) {
-            after()
-        }
     }
 
     sprite.prototype.left = function(before, after) {
-        if( before != undefined ) {
-            before()
-        }
-
-        this.move(-1,0)
-
-        if( after != undefined ) {
-            after()
-        }
+        return this.move(-1,0)
     }
 
     sprite.prototype.right = function(before, after) {
-        if( before != undefined ) {
-            before()
-        }
-
-        this.move(1,0)
-
-        if( after != undefined ) {
-            after()
-        }
+        return this.move(1,0)
     }
 
     sprite.prototype.move = function(x,y) {
@@ -313,7 +290,7 @@ function sprite(shape, $panel) {
 
 function gameController(game) {
   $(document).keydown(function( event ) {
-      console.log(event.which)
+      // console.log(event.which)
       if ( event.which == 82 /*r = restart*/ ) {
           stop = false
           game.restart()
@@ -324,10 +301,7 @@ function gameController(game) {
           event.preventDefault()
       }
       if ( event.which == 67 /*c = continue*/ ) {
-          if( stop === true ) {
-              game.continue()
-              // gameLoop()
-          }
+          game.continue()
           event.preventDefault()
       }
       if ( event.which == 37 /*left*/ ) {
@@ -347,52 +321,17 @@ function gameController(game) {
           event.preventDefault()
       }
   })
-  setInterval(game.tick, 1000)
+  setInterval(function() { game.tick() }, 1000)
 }
 
 function playGame() {
-    var $panel = $("div#panel")
-    var stop = false
-    var sh = new shape(shapeBuilderI,0,0,"0","orange")
-    var sp = new sprite(sh,$("div#panel"))
-    $panel.append(sp.$div)
-    //sp.move(0,0) eigentlich überflüssig weil move relativ verschiebt
+    this.$panel = $("div#panel")
+    this.stopped = false
+    this.sh = new shape(shapeBuilderI,0,0,"0","orange")
+    this.sp = new sprite(this.sh,$("div#panel"))
+    this.$panel.append(this.sp.$div)
+    this.hello = "hello"
 
-    $(document).keydown(function( event ) {
-        console.log(event.which)
-        if ( event.which == 82 /*r = restart*/ ) {
-            stop = false
-            sp.startPosition()
-            event.preventDefault()
-        }
-        if ( event.which == 83 /*s = stop*/ ) {
-            stop = true
-            event.preventDefault()
-        }
-        if ( event.which == 67 /*c = continue*/ ) {
-            if( stop === true ) {
-                stop = false
-                gameLoop()
-            }
-            event.preventDefault()
-        }
-        if ( event.which == 37 /*left*/ ) {
-            sp.left()
-            event.preventDefault()
-        }
-        if ( event.which == 39 /*right*/ ) {
-            sp.right()
-            event.preventDefault()
-        }
-        if ( event.which == 89 /*y*/ ) {
-            sp.rotateCounterClockwise()
-            event.preventDefault()
-        }
-        if ( event.which == 88 /*x*/ ) {
-            sp.rotateClockwise()
-            event.preventDefault()
-        }
-    })
 
     function randomShape() {
         console.log("NOT YET IMPLEMENTED")
@@ -406,21 +345,48 @@ function playGame() {
     function readyFieldsAdd(shape) {
         console.log("NOT YET IMPLEMENTED")
     }
+}
 
-    var gameLoop = function() {
-        if( stop === true ) return
+playGame.prototype.tick = function() {
+  console.log("tick", this.hello)
+  if( this.stopped === true ) return
 
-        sp.fall(undefined, function() {
-            var bottomBlocks = sp.bottomBlocks()
-            console.log(bottomBlocks)
-            /*if( touchesBottom(bottomBlocks) ) {
-                readyFieldsAdd(sp)
-                sp = randomShape()
-            } else if (touchesReady(bottomBlocks)) {
-                readyFieldAdd(sp)
-                sp = randomShape()
-            }*/
-        })
-    }
-    setInterval(gameLoop, 1000);
+  var bottomBlocks = this.sp.fall().bottomBlocks()
+  console.log(bottomBlocks)
+      /*if( touchesBottom(bottomBlocks) ) {
+          readyFieldsAdd(sp)
+          sp = randomShape()
+      } else if (touchesReady(bottomBlocks)) {
+          readyFieldAdd(sp)
+          sp = randomShape()
+      }*/
+}
+playGame.prototype.stop = function() {
+  console.log("stop", this.hello)
+  this.stopped = true
+}
+playGame.prototype.continue = function() {
+  console.log("continue", this.hello)
+  this.stopped = false
+}
+playGame.prototype.restart = function() {
+  console.log("restart", this.hello)
+  this.sp.startPosition()
+  this.continue()
+}
+playGame.prototype.left = function() {
+  console.log("left", this.hello)
+  this.sp.left()
+}
+playGame.prototype.right = function() {
+  console.log("right", this.hello)
+  this.sp.right()
+}
+playGame.prototype.rotateCounterClockwise = function() {
+  console.log("rotateCounterClockwise", this.hello)
+  this.sp.rotateCounterClockwise()
+}
+playGame.prototype.rotateClockwise = function() {
+  console.log("rotateClockwise", this.hello)
+  this.sp.rotateClockwise()
 }
