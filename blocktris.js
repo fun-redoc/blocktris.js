@@ -17,8 +17,14 @@ function blockAt(col, row, color,mark) {
         .css({backgroundColor: color})
         .width(BlockSize)
         .height(BlockSize)
-        .offset({ top: row*BlockSize + GameFieldPosY, left: col*BlockSize + GameFieldPosX}).html(mark)
+        .offset({ top: row*BlockSize + GameFieldPosY, left: col*BlockSize + GameFieldPosX})
+        .html(mark)
     return $block
+}
+
+function blockMoveBy($div, x,y) {
+  $div.offset({ top: $div.offset().top + y*BlockSize, left: $div.offset().left + x*BlockSize})
+  return $div
 }
 
 
@@ -232,8 +238,12 @@ function sprite(shape, $panel) {
         })
     }
 
-    //+ updateSpriteFromShape :: $div -> shape ->
-    function updateSpriteFromShape(sprite)
+    //+ updateSpriteFromShape :: $div -> Number -> Number -> $div
+    function updateSpriteApperance($div, x, y) {
+      $div.children().each( function(idx) {
+          blockMoveBy($(this),x,y) })
+      return $div
+    }
 
     function move(x, y, sprite) {
       return fn.compose(spriteFromShape, function moveSpritesShape(s) {s.shape = s.shape.move(x,y); return s})(sprite)
@@ -255,7 +265,7 @@ function sprite(shape, $panel) {
     sprite.prototype.move = function(x,y) {
         // return move(x,y, this)
         this.shape = this.shape.move(x,y)
-        updateSpriteFromShape(this)
+        updateSpriteApperance(this.$div, x, y)
         return this
     }
 
