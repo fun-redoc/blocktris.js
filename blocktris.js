@@ -1,5 +1,6 @@
 $(document).ready( function() {
-    gameController( new playGame() )
+    var sprites
+    gameController( new playGame([], $("div#panel")) )
 })
 
 var GameFieldPosX = 20
@@ -169,38 +170,37 @@ function shapeBuilderI() {
     }
 }
 
-function shape(shapeBuilder,x,y,rot,color) {
+function shape(shapeBuilder,color,x,y,rot) {
     shape.prototype.position = function(x,y) {
-        return new shape(this.shapeBuilder,  x, y, this.rot, this.color)
+        return new shape(this.shapeBuilder, this.color,  x, y, this.rot)
     }
     shape.prototype.move = function(x,y) {
-        return new shape(this.shapeBuilder, this.pos.x + x, this.pos.y + y, this.rot, this.color)
+        return new shape(this.shapeBuilder, this.color, this.pos.x + x, this.pos.y + y, this.rot)
     }
     shape.prototype.rotateClockwise = function() {
         switch (this.rot) {
-            case '0': return new shape(this.shapeBuilder, this.pos.x, this.pos.y, "90", this.color); break;
-            case '90': return new shape(this.shapeBuilder, this.pos.x, this.pos.y, "180", this.color); break;
-            case '180': return new shape(this.shapeBuilder, this.pos.x, this.pos.y, "270", this.color); break;
-            case '270': return new shape(this.shapeBuilder, this.pos.x, this.pos.y, "0", this.color);break;
+            case '0': return new shape(this.shapeBuilder, this.color, this.pos.x, this.pos.y, "90"); break;
+            case '90': return new shape(this.shapeBuilder, this.color, this.pos.x, this.pos.y, "180"); break;
+            case '180': return new shape(this.shapeBuilder, this.color, this.pos.x, this.pos.y, "270"); break;
+            case '270': return new shape(this.shapeBuilder, this.color, this.pos.x, this.pos.y, "0");break;
             default:
                 return this
         }
     }
     shape.prototype.rotateCounterClockwise = function() {
         switch (this.rot) {
-            case '0': return new shape(this.shapeBuilder, this.pos.x, this.pos.y, "270", this.color); break;
-            case '90': return new shape(this.shapeBuilder, this.pos.x, this.pos.y, "0", this.color); break;
-            case '180': return new shape(this.shapeBuilder, this.pos.x, this.pos.y, "90", this.color);break;
-            case '270': return new shape(this.shapeBuilder, this.pos.x, this.pos.y, "180", this.color); break;
+            case '0': return new shape(this.shapeBuilder, this.color, this.pos.x, this.pos.y, "270"); break;
+            case '90': return new shape(this.shapeBuilder, this.color, this.pos.x, this.pos.y, "0"); break;
+            case '180': return new shape(this.shapeBuilder, this.color, this.pos.x, this.pos.y, "90");break;
+            case '270': return new shape(this.shapeBuilder, this.color, this.pos.x, this.pos.y, "180" ); break;
             default:
                 return this
         }
     }
-    console.log(rot)
     this.shapeBuilder = shapeBuilder
-    this.pos = {"x":x, "y":y }
-    this.rot = rot
-    this.color = color
+    this.pos = {"x":x || 0, "y":y||0 }
+    this.rot = rot || '0'
+    this.color = color ||'grey'
     return this
 }
 
@@ -212,12 +212,14 @@ function sprite(shape, $panel) {
      function emptySprite(sprite) {
        sprite.$div.remove()
        sprite.$div = $("<div/>")
+       return sprite
     }
 
     function spriteFromShape(sprite, shape) {
         emptySprite(sprite)
         drawShapeAt(sprite.$div,sprite.shape,sprite.shape.color)
         sprite.$panel.append( sprite.$div )
+        return sprite
     }
 
     function drawShapeAt(panel, shape, color) {
@@ -230,22 +232,30 @@ function sprite(shape, $panel) {
         })
     }
 
-    sprite.prototype.fall = function(before, after) {
+    //+ updateSpriteFromShape :: $div -> shape ->
+    function updateSpriteFromShape(sprite)
+
+    function move(x, y, sprite) {
+      return fn.compose(spriteFromShape, function moveSpritesShape(s) {s.shape = s.shape.move(x,y); return s})(sprite)
+    }
+
+    sprite.prototype.fall = function() {
         return this.move(0,1)
 
     }
 
-    sprite.prototype.left = function(before, after) {
+    sprite.prototype.left = function() {
         return this.move(-1,0)
     }
 
-    sprite.prototype.right = function(before, after) {
+    sprite.prototype.right = function() {
         return this.move(1,0)
     }
 
     sprite.prototype.move = function(x,y) {
+        // return move(x,y, this)
         this.shape = this.shape.move(x,y)
-        spriteFromShape(this)
+        updateSpriteFromShape(this)
         return this
     }
 
@@ -324,11 +334,11 @@ function gameController(game) {
   setInterval(function() { game.tick() }, 1000)
 }
 
-function playGame() {
-    this.$panel = $("div#panel")
+function playGame(sprites, $panel) {
+    this.$panel = $panel
     this.stopped = false
-    this.sh = new shape(shapeBuilderI,0,0,"0","orange")
-    this.sp = new sprite(this.sh,$("div#panel"))
+    this.sh = new shape(shapeBuilderI,"orange")
+    this.sp = new sprite(this.sh,this.$panel)
     this.$panel.append(this.sp.$div)
     this.hello = "hello"
 
@@ -352,7 +362,7 @@ playGame.prototype.tick = function() {
   if( this.stopped === true ) return
 
   var bottomBlocks = this.sp.fall().bottomBlocks()
-  console.log(bottomBlocks)
+  // console.log(bottomBlocks)
       /*if( touchesBottom(bottomBlocks) ) {
           readyFieldsAdd(sp)
           sp = randomShape()
