@@ -3,6 +3,41 @@ $(document).ready( function() {
     gameController( new playGame([], $("div#panel")) )
 })
 
+//+ add :: Number -> Number -> Number
+var add = fn.curry(function(a1,a2) {return a1+a2})
+
+//+ zip :: (a -> a -> a) -> array -> array ->array
+var zip = fn.curry(function(fn,arr1,arr2) {
+  var result = []
+  if( !arr1 || !arr2) return result
+
+  var len = arr1.length > arr2.length ? arr2.length : arr1.length
+
+  for( var i = 0; i < len; i++) {
+    result.push(fn(arr1[i],arr2[i]))
+  }
+  return result
+})
+
+//+ coordinates :: [[]] -> [[Number,Number]]
+var shapeCoordinates = function(arr) {
+  var result = []
+  for( var r = 0; r < arr.length; r++) {
+    var cols = arr[r]
+    for(var c = 0; c < arr[r].length; c++) {
+      if( cols[c] !== 0 ) {
+        result.push([c,r])
+      }
+    }
+  }
+  return result
+}
+
+// +positionBlock :: $div -> x -> y -> $div
+var positionBlock = fn.curry(function($div,x,y) {
+  return $div.offset({ top: y*BlockSize + GameFieldPosY, left: x*BlockSize + GameFieldPosX})
+})
+
 var GameFieldPosX = 20
 var GameFieldPosY = 20
 
@@ -245,6 +280,15 @@ function sprite(shape, $panel) {
       return $div
     }
 
+    function updateSpriteByShape(sprite, shape) {
+      var shapeCoords = shapeCoordinates(shape.shapeBuilder()[shape.rot])
+      var shapeCoordinatesWithOffset = fn.map(zip(add,[shape.pos.x, shape.pos.y]) ,shapeCoords)
+      sprite.$div.children().each(function(idx) {
+        fn.apply(positionBlock($(this)), shapeCoordinatesWithOffset[idx])
+      })
+      return sprite
+    }
+
     function move(x, y, sprite) {
       return fn.compose(spriteFromShape, function moveSpritesShape(s) {s.shape = s.shape.move(x,y); return s})(sprite)
     }
@@ -265,19 +309,22 @@ function sprite(shape, $panel) {
     sprite.prototype.move = function(x,y) {
         // return move(x,y, this)
         this.shape = this.shape.move(x,y)
-        updateSpriteApperance(this.$div, x, y)
+        // updateSpriteApperance(this.$div, x, y)
+        updateSpriteByShape(this, this.shape)
         return this
     }
 
     sprite.prototype.rotateClockwise = function() {
         this.shape = this.shape.rotateClockwise()
-        spriteFromShape(this)
+        // spriteFromShape(this)
+        updateSpriteByShape(this, this.shape)
         return this
     }
 
     sprite.prototype.rotateCounterClockwise = function() {
         this.shape = this.shape.rotateCounterClockwise()
-        spriteFromShape(this)
+        // spriteFromShape(this)
+        updateSpriteByShape(this, this.shape)
         return this
     }
 
