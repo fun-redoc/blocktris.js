@@ -1,6 +1,30 @@
 $(document).ready( function() {
     var sprites
-    gameController( new playGame([], $("div#panel")) )
+    gameController( new playGame([
+                                    new shape(shapeBuilderI,"orange"),
+                                    new shape(shapeBuilderT,"orange"),
+                                    new shape(shapeBuilderS,"orange"),
+                                    new shape(shapeBuilderZ,"orange"),
+                                    new shape(shapeBuilderL,"orange"),
+                                    new shape(shapeBuilderJ,"orange")
+                                    ],
+                                    $("div#panel")) )
+})
+
+//+ rnd :: Integer -> Integer
+function rnd(modul) {
+  return Math.floor(((Math.random() * 1000000000) % modul))
+}
+
+//+ iff :: fn -> bool -> fn
+var iff = fn.curry( function(ft, ff, b) {
+  if(b === true) {return ft}
+    else {return ff}
+})
+
+//+ ifTrue :: fn -> bool
+var ifTrue = fn.curry(function(f,b) {
+  if(b === true) {return f}
 })
 
 //+ add :: Number -> Number -> Number
@@ -18,6 +42,20 @@ var zip = fn.curry(function(fn,arr1,arr2) {
   }
   return result
 })
+
+//+ Maybe :: v -> Maybe(v)
+function Maybe(v) {
+  return function() {return v}
+}
+
+//+ apply :: fn -> Maybe -> Maybe
+var apply = fn.curry(function(f,m) {
+  return m() ? Maybe(f(m())) : Maybe(null)
+})
+
+//+ val :: Maybe(v) -> v
+var val = function(m) { return m() }
+
 
 //+ coordinates :: [[]] -> [[Number,Number]]
 var shapeCoordinates = function(arr) {
@@ -37,6 +75,27 @@ var shapeCoordinates = function(arr) {
 var positionBlock = fn.curry(function($div,x,y) {
   return $div.offset({ top: y*BlockSize + GameFieldPosY, left: x*BlockSize + GameFieldPosX})
 })
+
+// + inRect :: number -> number -> number -> number -> number -> bool
+var inRect = fn.curry(function(left, top, width, height, x, y){
+  return x <= left + width && left <= x && y >= top && y <= top + height
+})
+
+// + inGameField :: number -> number -> bool
+var inGameField = inRect(GameFieldPosX, GameFieldPosY, GameFieldCols, GameFieldRows)
+
+//+ not :: bool -> bool
+function not(b) { return !b}
+
+//+ blockTouchesGround :: number -> number -> bool
+var blockTouchesGround = fn.compose(not, inGameField)
+
+
+//+ trace :: a -> a
+function trace(a) {
+  console.log(a)
+  return a
+}
 
 var GameFieldPosX = 20
 var GameFieldPosY = 20
@@ -345,7 +404,7 @@ function sprite(shape, $panel) {
                 return previousValue
             }
         }, [])
-        //console.log("-->", resultArray)
+        ////console.log("-->", resultArray)
         return resultArray
     }
 
@@ -357,7 +416,7 @@ function sprite(shape, $panel) {
 
 function gameController(game) {
   $(document).keydown(function( event ) {
-      // console.log(event.which)
+      // //console.log(event.which)
       if ( event.which == 82 /*r = restart*/ ) {
           stop = false
           game.restart()
@@ -391,35 +450,43 @@ function gameController(game) {
   setInterval(function() { game.tick() }, 1000)
 }
 
-function playGame(sprites, $panel) {
+function playGame(shapes, $panel) {
     this.$panel = $panel
+    this.nextShape = randomShape(shapes)
     this.stopped = false
-    this.sh = new shape(shapeBuilderI,"orange")
+    this.sh = this.nextShape() //new shape(shapeBuilderI,"orange")
     this.sp = new sprite(this.sh,this.$panel)
     this.$panel.append(this.sp.$div)
     this.hello = "hello"
 
 
-    function randomShape() {
-        console.log("NOT YET IMPLEMENTED")
+    function randomShape(shapes) {
+        //console.log("NOT YET IMPLEMENTED")
+        var mod = shapes.length
+        return function() { return shapes[rnd(mod)] }
     }
 
     function touchesBottom(blocks) {
-        console.log("NOT YET IMPLEMENTED")
+        //console.log("NOT YET IMPLEMENTED")
         return true
     }
 
     function readyFieldsAdd(shape) {
-        console.log("NOT YET IMPLEMENTED")
+        //console.log("NOT YET IMPLEMENTED")
     }
 }
 
 playGame.prototype.tick = function() {
-  console.log("tick", this.hello)
+  //console.log("tick", this.hello)
+
   if( this.stopped === true ) return
 
   var bottomBlocks = this.sp.fall().bottomBlocks()
-  // console.log(bottomBlocks)
+  // PROBLEM: fall shoub be called after it is shure that the block doesnt toouch the ground
+  //          so i will have to move shape first, than check if there is a collision than draw the sprite
+  //        => refactor the movement functions, separate the concerns of moveing and drawing
+  fn.compose(iff(this.nextShape, this.sp.fall), trace, touchesGround, trace)(this.sp.bottomBlocks)()
+  //console.log(bottomBlocks)
       /*if( touchesBottom(bottomBlocks) ) {
           readyFieldsAdd(sp)
           sp = randomShape()
@@ -429,31 +496,31 @@ playGame.prototype.tick = function() {
       }*/
 }
 playGame.prototype.stop = function() {
-  console.log("stop", this.hello)
+  //console.log("stop", this.hello)
   this.stopped = true
 }
 playGame.prototype.continue = function() {
-  console.log("continue", this.hello)
+  //console.log("continue", this.hello)
   this.stopped = false
 }
 playGame.prototype.restart = function() {
-  console.log("restart", this.hello)
+  //console.log("restart", this.hello)
   this.sp.startPosition()
   this.continue()
 }
 playGame.prototype.left = function() {
-  console.log("left", this.hello)
+  //console.log("left", this.hello)
   this.sp.left()
 }
 playGame.prototype.right = function() {
-  console.log("right", this.hello)
+  //console.log("right", this.hello)
   this.sp.right()
 }
 playGame.prototype.rotateCounterClockwise = function() {
-  console.log("rotateCounterClockwise", this.hello)
+  //console.log("rotateCounterClockwise", this.hello)
   this.sp.rotateCounterClockwise()
 }
 playGame.prototype.rotateClockwise = function() {
-  console.log("rotateClockwise", this.hello)
+  //console.log("rotateClockwise", this.hello)
   this.sp.rotateClockwise()
 }

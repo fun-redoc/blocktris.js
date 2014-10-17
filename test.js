@@ -1,36 +1,39 @@
 var fn = require("fn.js")
 
-//+ zip :: (a -> a -> a) -> array -> array ->array
-var zip = fn.curry(function(fn,arr1,arr2) {
-  var result = []
-  if( !arr1 || !arr2) return result
 
-  var len = arr1.length > arr2.length ? arr2.length : arr1.length
 
-  for( var i = 0; i < len; i++) {
-    result.push(fn(arr1[i],arr2[i]))
-  }
-  return result
+//+ iff :: fn -> bool -> fn
+var iff = fn.curry( function(ft, ff, b) {
+  if(b === true) {return ft}
+    else {return ff}
 })
 
-console.log(zip(function(a1,a2) {return a1+a2}, [1,2,3,4,5], [1,2,3,4,5]))
+var a = iff(function() {console.log("hallo true")},function() {console.log("hallo false")})(true)
+var b = iff(function() {console.log("hallo true")},function() {console.log("hallo false")})(false)
 
+a()
+b()
 
-var shape = [ [1,0,0],
-              [0,1,0],
-              [1,0,1] ]
-
-//+ coordinates :: [[]] -> [[Number,Number]]
-var shapeCoordinates = function(arr) {
-  var result = []
-  for( var r = 0; r < arr.length; r++) {
-    for(var c = 0; c < arr[r].length; c++) {
-      if( arr[r][c] !== 0 ) {
-        result.push([r,c])
-      }
-    }
-  }
-  return result
+//+ Maybe :: v -> Maybe(v)
+function Maybe(v) {
+  return function() {return v}
 }
 
-console.log(shapeCoordinates(shape))
+//+ apply :: fn -> Maybe -> Maybe
+var apply = fn.curry(function(f,m) {
+  return m() ? Maybe(f(m())) : Maybe(null)
+})
+
+//+ val :: Maybe(v) -> v
+var val = function(m) { return m() }
+
+var inc = function(v) { return v + 1 }
+
+fn.compose(console.log,val,apply(inc), apply(inc), Maybe)(undefined)
+
+// fn.compose(console.log, apply(inc), appl(inc)
+
+
+
+
+console.log(inGameField( 4, 19 ))
