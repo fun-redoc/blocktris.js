@@ -25,6 +25,14 @@ function shape(shapeBuilder,color,x,y,rot) {
                 return this
         }
     }
+    //+ blocks :: shape -> [{x,y}]
+    shape.prototype.blocks = function() {
+      return this.shapeBuilder()[this.rot].reduce( function(accuRow, row, idxRow) {
+        return accuRow.concat(row.reduce( function(accu, col, idxCol) {
+          return col !== 0 ? accu.concat({x:idxCol + this.pos.x, y:idxRow + this.pos.y}) : accu;
+        },[]))
+      }, [])
+    }
     this.shapeBuilder = shapeBuilder
     this.pos = {"x":x || 0, "y":y||0 }
     this.rot = rot || '0'

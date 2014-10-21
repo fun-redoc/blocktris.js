@@ -67,17 +67,16 @@ function randomShape(shapes) {
 
 //+ update :: game -> game
 var tick = fn.curry(function(shapes, game) {
-  console.log("TICK")
 
   var fall = function(game) {return game.currentShape.move(0,1) }
-  var canFall = function(g) { return fn.filter(notInGameField, fall(g)).length === 0 }
+  var canFall = function(g) { return fn.filter(fn.compose(trace("not in game field"),notInGameField), fall(g).blocks()).length === 0 }
   var fallIfYouCan = iff( function(g) {
                             return assignValidProperty('currentShape', fall(g) ,g)
                         },
                         function(g) {
                             return assignValidProperty('currentShape', randomShape(shapes), g)
                         },
-                        canFall)
+                        fn.compose(trace("canFAll"),canFall))
 
   // TODO collision with other shapes
   	console.log(game.currentShape.pos.x,game.currentShape.pos.y)
@@ -86,8 +85,33 @@ var tick = fn.curry(function(shapes, game) {
 })
 
 
-function render(panel, game) {
+function render($panel, game) {
+    function drawShapeAt(panel, shape, color) {
+        shape.shapeBuilder()[shape.rot].forEach( function(row, idxY, arr) {
+            row.forEach( function(col,idxX,arr) {
+                if( col !== 0 ) {
+                    panel.append( blockAt(idxX + shape.pos.x, idxY + shape.pos.y,color, '.'))
+                }
+            })
+        })
+    }
 
+    function updateSpriteByShape(sprite, shape) {
+      var shapeCoords = shapeCoordinates(shape.shapeBuilder()[shape.rot])
+      var shapeCoordinatesWithOffset = fn.map(zip(add,[shape.pos.x, shape.pos.y]) ,shapeCoords)
+      sprite.children().each(function(idx) {
+        fn.apply(positionBlock($(this)), shapeCoordinatesWithOffset[idx])
+      })
+      return sprite
+    }
+
+    if($panel.children().size() <= 0) {
+      // TODO
+      //.... drawAt rendertn nich innerhalb vom div sondern parallel!
+      drawShapeAt($panel, game.currentShape, game.currentShape.color)
+    } else {
+      updateSpriteByShape($panel, game.currentShape)
+    }
 }
 
 function gameController(shapes, game, viewPanel) {
