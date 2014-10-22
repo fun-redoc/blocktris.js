@@ -1,4 +1,12 @@
-function shapeBuilderT() {
+var makeBlocks = fn.memoize(function(a) {
+  return a.reduce( function(accuRow, row, idxRow) {
+    return accuRow.concat(row.reduce( function(accu, col, idxCol) {
+            return col !== 0 ? accu.concat({x:idxCol, y:idxRow}) : accu;
+          },[]))
+  }, [])
+})
+
+var shapeBuilderT = fn.curry(function shapeBuilderT(color,angle) {
     var r0 =  [
                      [1,1,1],
                      [0,1,0]
@@ -16,15 +24,18 @@ function shapeBuilderT() {
                     [0,1,0],
                     [1,1,1],
                 ]
-    return { "0" : r0,
-            "90" : r90,
-            "180" : r180,
-            "270" : r270
+    var color = color
+    var rotations = {
+            "0" : makeBlocks(this.r0),
+            "90" : makeBlocks(this.r90),
+            "180" : makeBlocks(this.r180),
+            "270" : makeBlocks(this.r270)
     }
-}
+    return {color:color, blocks:rotations[angle]}
+})
 
 
-function shapeBuilderS() {
+var shapeBuilderS = fn.curry(function shapeBuilderS(color,angle) {
     var r0 =  [
                      [0,1,1],
                      [1,1,0]
@@ -43,14 +54,17 @@ function shapeBuilderS() {
                     [1,1],
                     [0,1]
                 ]
-    return { "0" : r0,
-            "90" : r90,
-            "180" : r180,
-            "270" : r270
+    var color = color
+    var rotations =  {
+            "0" : makeBlocks(this.r0),
+            "90" : makeBlocks(this.r90),
+            "180" : makeBlocks(this.r180),
+            "270" : makeBlocks(this.r270)
     }
-}
+    return {color:color, blocks:rotations[angle]}
+})
 
-function shapeBuilderZ() {
+var shapeBuilderZ = fn.curry(function shapeBuilderZ(color,angle) {
     var r0 =  [
                      [1,1,0],
                      [0,1,1]
@@ -69,14 +83,17 @@ function shapeBuilderZ() {
                     [1,1],
                     [1,0]
                 ]
-    return { "0" : r0,
-            "90" : r90,
-            "180" : r180,
-            "270" : r270
+    var color = color
+    var rotations =  {
+            "0" : makeBlocks(this.r0),
+            "90" : makeBlocks(this.r90),
+            "180" : makeBlocks(this.r180),
+            "270" : makeBlocks(this.r270)
     }
-}
+    return {color:color, blocks:rotations[angle]}
+})
 
-function shapeBuilderL() {
+var shapeBuilderL = fn.curry(function shapeBuilderL(color,angle) {
     var r0 =  [
                      [1,0],
                      [1,0],
@@ -95,14 +112,17 @@ function shapeBuilderL() {
                      [0,0,1],
                      [1,1,1]
                 ]
-    return { "0" : r0,
-            "90" : r90,
-            "180" : r180,
-            "270" : r270
+    var color = color
+    var rotations =  {
+            "0" : makeBlocks(this.r0),
+            "90" : makeBlocks(this.r90),
+            "180" : makeBlocks(this.r180),
+            "270" : makeBlocks(this.r270)
     }
-}
+    return {color:color, blocks:rotations[angle]}
+})
 
-function shapeBuilderJ() {
+var shapeBuilderJ = fn.curry(function shapeBuilderJ(color,angle) {
     var r0 =  [
                      [0,1],
                      [0,1],
@@ -121,13 +141,17 @@ function shapeBuilderJ() {
                      [1,1,1],
                      [0,0,1]
                 ]
-    return { "0" : r0,
-            "90" : r90,
-            "180" : r180,
-            "270" : r270
+    var color = color
+    var rotations =  {
+            "0" : makeBlocks(this.r0),
+            "90" : makeBlocks(this.r90),
+            "180" : makeBlocks(this.r180),
+            "270" : makeBlocks(this.r270)
     }
-}
-function shapeBuilderI() {
+    return {color:color, blocks:rotations[angle]}
+})
+
+var shapeBuilderI = fn.curry(function shapeBuilderI(color,angle) {
     var r0 =  [
                  [0,1],
                  [0,1],
@@ -139,9 +163,12 @@ function shapeBuilderI() {
                  [0,0,0,0],
                  [1,1,1,1]
                 ]
-    return { "0" : r0,
-            "90" : r90,
-            "180" : r0,
-            "270" : r90
+    var color = color
+    var rotations =  {
+            "0" : makeBlocks(this.r0),
+            "90" : makeBlocks(this.r90),
+            "180" : makeBlocks(this.r0),
+            "270" : makeBlocks(this.r90)
     }
-}
+    return {color:color, blocks:rotations[angle]}
+})

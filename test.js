@@ -1,39 +1,38 @@
 
 var fn = require("fn.js")
-//
-// var queue = []
-//
-// queue.push( function add1(a) {return a +1} )
-// queue.push(function add2(a) {return a +2} )
-// queue.push(function check3(a) {return a === 3} )
-//
-// console.log(queue)
-//
-//
-// //+ compose : [fn] -> a -> b
-// var compose = fn.curry( function compose(q, a) {
-//   var accu  = a
-//   while(q.length > 0) {
-//     var f = q.shift()
-//     accu = f(accu)
-//   }
-//   return accu
-// })
-//
-// console.log(queue, compose(queue)(0))
-//
-// console.log([], compose([])(0))
 
 
-//+ iff :: fn true -> fn false -> fn -> v -> bool -> fn
-var iff = fn.curry( function(ft, ff, b, v) {
-  if(b(v) === true) {
-      return ft(v)
-  } else {
-    return ff(v)
-  }
+var makeBlocks = fn.memoize(function(a) {
+  return a.reduce( function(accuRow, row, idxRow) {
+    return accuRow.concat(row.reduce( function(accu, col, idxCol) {
+            return col !== 0 ? accu.concat({x:idxCol, y:idxRow}) : accu;
+          },[]))
+  }, [])
 })
 
-iff(function(v) {console.log("true",v)},
-               function(v) {console.log("false",v)},
-               function(v) {console.log("test",v); return v === 0})(0)
+function shapeBuilderT() {
+    var r0 =  [
+                     [1,1,1],
+                     [0,1,0]
+                   ]
+    var r90 = [
+                    [0,1],
+                    [1,1],
+                    [0,1]
+                    ]
+    var r180 = [
+                    [0,1,0],
+                    [1,1,1]
+                ]
+    var r270 = [
+                    [0,1,0],
+                    [1,1,1],
+                ]
+    return { "0" : makeBlocks(r0),
+            "90" : r90,
+            "180" : r180,
+            "270" : r270
+    }
+}
+
+console.log(shapeBuilderT()["0"])

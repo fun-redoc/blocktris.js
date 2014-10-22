@@ -1,14 +1,13 @@
 $(document).ready( function() {
     gameController( [
-                      new shape(shapeBuilderI,"orange"),
-                      new shape(shapeBuilderT,"red"),
-                      new shape(shapeBuilderS,"green"),
-                      new shape(shapeBuilderZ,"blue"),
-                      new shape(shapeBuilderL,"magenta"),
-                      new shape(shapeBuilderJ,"brown")
+                      shapeBuilderI("orange"),
+                      shapeBuilderT("red"),
+                      shapeBuilderS("green"),
+                      shapeBuilderZ("blue"),
+                      shapeBuilderL("magenta"),
+                      shapeBuilderJ("brown")
                     ],
-                    { elements : [],
-                      currentShape : null,
+                    { fallenShapes : [],
                       stop: false,
                     },
                     $("div#panel"))
@@ -59,29 +58,23 @@ var collision = function(game) {
   return false
 }
 
-//+ randomShape :: [shape] -> shape
+//+ randomShape :: [shape] -> (fn :: void -> shape )
 function randomShape(shapes) {
     var mod = shapes.length
-    return shapes[rnd(mod)]
+    return function() { return shapes[rnd(mod)] }
 }
 
-//+ update :: game -> game
-var tick = fn.curry(function(shapes, game) {
+//+ tick :: (fn :: [shapes] -> shape) -> shape -> (fn :: game -> game)
+var tick = fn.curry(function(nextShapeMaker, currentShape) {
 
-  var fall = function(game) {return game.currentShape.move(0,1) }
-  var canFall = function(g) { return fn.filter(fn.compose(trace("not in game field"),notInGameField), fall(g).blocks()).length === 0 }
-  var fallIfYouCan = iff( function(g) {
-                            return assignValidProperty('currentShape', fall(g) ,g)
-                        },
-                        function(g) {
-                            return assignValidProperty('currentShape', randomShape(shapes), g)
-                        },
-                        fn.compose(trace("canFAll"),canFall))
+  var fallenShape = fn.map(function(pair){ return {x:paix.x, y:pair.y+1}}, currentShape)
 
+  // TODO pass notInGameField as parameter
+  var canFall = fn.filter(fn.compose(trace("not in game field"),notInGameField), fallenShape).length === 0
+
+  return canFall ?  function(g) { g.currentShape = fallenShape; return g } :
+                     function(g) { g.currentShape = nextShapeMaker(); return g }
   // TODO collision with other shapes
-  	console.log(game.currentShape.pos.x,game.currentShape.pos.y)
-   return fallIfYouCan(game)
-// return game
 })
 
 
@@ -116,9 +109,10 @@ function render($panel, game) {
 
 function gameController(shapes, game, viewPanel) {
   var update = []
-  // var updateGameWithShapes = updateGame(shapes)
-  assignValidProperty('currentShape', randomShape(shapes))(game)
-  setInterval(function() { update.push(tick(shapes)) }, 1000)
+  var nextShapeMaker = randomShape(shapes)
+  game.currentShape = nextShapeMaker()
+  var nextTick = tick(nextShapeMaker)
+  setInterval(function() { update.push(nextTick(game.currentShape)) }, 1000)
   setInterval(function() { render(viewPanel, run(update,game))  }, 100)
 
   $(document).keydown(function( event ) {
