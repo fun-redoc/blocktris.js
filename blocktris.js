@@ -1,11 +1,15 @@
+// var fn = require("./fn.js")
+// var sb = require("./sb.s.js")
+
+
 $(document).ready( function() {
     gameController( [
-                      shapeBuilderI("orange"),
-                      shapeBuilderT("red"),
-                      shapeBuilderS("green"),
-                      shapeBuilderZ("blue"),
-                      shapeBuilderL("magenta"),
-                      shapeBuilderJ("brown")
+                      sb.I("orange","0"),
+                      sb.T("red","0"),
+                      sb.S("green","0"),
+                      sb.Z("blue","0"),
+                      sb.L("magenta","0"),
+                      sb.J("brown","0")
                     ],
                     { fallenShapes : [],
                       stop: false,
@@ -21,6 +25,30 @@ var GameFieldRows = 20
 var GameFieldCols = 10
 
 
+var move = fn.curry(function(x, y, vector) {
+  return {x:vector.x + x, y:vector.y + y}
+})
+
+var fall = function fall(vector) {
+  return {x:vector.x, y:vector.y+1}
+}
+
+var moveL = function moveL(vector) {
+  return {x:vector.x-1, y:vector.y}
+}
+
+var moveR = function moveR(vector) {
+  return {x:vector.x+1, y:vector.y}
+}
+
+var rotR = function(vector) {
+  return {x:-vector.y, y:vector.x}
+}
+
+var rotL = function(vector) {
+  return {x:vector.y, y:-vector.x}
+}
+
 // +positionBlock :: $div -> x -> y -> $div
 var positionBlock = fn.curry(function($div,x,y) {
   return $div.offset({ top: y*BlockSize + GameFieldPosY, left: x*BlockSize + GameFieldPosX})
@@ -32,8 +60,6 @@ var inGameField = inRect(GameFieldPosX, GameFieldPosY, GameFieldCols, GameFieldR
 
 //+ notInGameField :: number -> number -> bool
 var notInGameField = fn.compose(not, inGameField)
-
-
 
 
 function blockAt(col, row, color,mark) {
@@ -58,42 +84,39 @@ var collision = function(game) {
   return false
 }
 
-//+ randomShape :: [shape] -> (fn :: void -> shape )
-function randomShape(shapes) {
-    var mod = shapes.length
-    return function() { return shapes[rnd(mod)] }
+//+ randomShape :: [sb.] -> ???
+function randomShape(sbs) {
+    var mod = sbs.length
+    //not yet clear
+    return function() {return sbs[rnd(mod)]}
 }
 
 //+ tick :: (fn :: [shapes] -> shape) -> shape -> (fn :: game -> game)
 var tick = fn.curry(function(nextShapeMaker, currentShape) {
 
-  var fallenShape = fn.map(function(pair){ return {x:paix.x, y:pair.y+1}}, currentShape)
+  var fallenShape = fn.map(fall, currentShape.blocks)
 
   // TODO pass notInGameField as parameter
   var canFall = fn.filter(fn.compose(trace("not in game field"),notInGameField), fallenShape).length === 0
-
-  return canFall ?  function(g) { g.currentShape = fallenShape; return g } :
+canFall = true
+  return canFall ?  function(g) {
+      g.currentShape.blocks = fallenShape; return g
+      } :
                      function(g) { g.currentShape = nextShapeMaker(); return g }
   // TODO collision with other shapes
 })
 
 
 function render($panel, game) {
-    function drawShapeAt(panel, shape, color) {
-        shape.shapeBuilder()[shape.rot].forEach( function(row, idxY, arr) {
-            row.forEach( function(col,idxX,arr) {
-                if( col !== 0 ) {
-                    panel.append( blockAt(idxX + shape.pos.x, idxY + shape.pos.y,color, '.'))
-                }
-            })
-        })
+    function drawShapeAt(panel, shape) {
+        fn.each( function(pair) {
+            panel.append( blockAt(pair.x, pair.y,shape.color, '.'))
+        },shape.blocks)
     }
 
     function updateSpriteByShape(sprite, shape) {
-      var shapeCoords = shapeCoordinates(shape.shapeBuilder()[shape.rot])
-      var shapeCoordinatesWithOffset = fn.map(zip(add,[shape.pos.x, shape.pos.y]) ,shapeCoords)
       sprite.children().each(function(idx) {
-        fn.apply(positionBlock($(this)), shapeCoordinatesWithOffset[idx])
+        positionBlock($(this), shape.blocks[idx].x,shape.blocks[idx].y)
       })
       return sprite
     }
@@ -146,7 +169,7 @@ function gameController(shapes, game, viewPanel) {
           update.push(function(game) {
             // TODO left boud!!
             console.log("LEFT")
-            game.currentShape = game.currentShape.move(-1,0)
+            game.currentShape.blocks = fn.map(moveL,game.currentShape.blocks)
             return game
           })
           // game.left()
@@ -156,7 +179,7 @@ function gameController(shapes, game, viewPanel) {
           update.push(function(game) {
             // TODO rigth boud!!
             console.log("RIGHT")
-            game.currentShape = game.currentShape.move(1,0)
+            game.currentShape.blocks = fn.map(moveR,game.currentShape.blocks)
             return game
           })
           // game.right()
@@ -165,7 +188,7 @@ function gameController(shapes, game, viewPanel) {
       if ( event.which == 89 /*y*/ ) {
           update.push(function(game) {
             // TODO bounds!!
-            game.currentShape = game.currentShape.rotateClockwise()
+            game.currentShape.blocks = fn.map(rotR,game.currentShape.blocks)
             return game
           })
           event.preventDefault()
@@ -173,7 +196,7 @@ function gameController(shapes, game, viewPanel) {
       if ( event.which == 88 /*x*/ ) {
           update.push(function(game) {
             // TODO bounds!!
-            game.currentShape = game.currentShape.rotateCounterClockwise()
+            game.currentShape.blocks = fn.map(rotL,game.currentShape.blocks)
             return game
           })
           event.preventDefault()
