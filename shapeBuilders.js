@@ -16,177 +16,125 @@ var sb = { };
   var makeBlocks = fn.memoize(function(a) {
     return a.reduce( function(accuRow, row, idxRow) {
       return accuRow.concat(row.reduce( function(accu, col, idxCol) {
-              return col !== 0 ? accu.concat({x:idxCol, y:idxRow}) : accu;
+              return col !== 0 ? accu.concat({x:idxCol, y:idxRow, center: (col === -1)}) : accu;
             },[]))
     }, [])
   })
 
-  sb.T = fn.curry(function shapeBuilderT(color,angle) {
-      var r0 =  [
-                       [1,1,1],
-                       [0,1,0]
-                     ]
-      var r90 = [
-                      [0,1],
-                      [1,1],
-                      [0,1]
-                      ]
-      var r180 = [
-                      [0,1,0],
-                      [1,1,1]
-                  ]
-      var r270 = [
-                      [0,1,0],
-                      [1,1,1],
-                  ]
-      var color = color
-      var rotations = {
-              "0" : makeBlocks(r0),
-              "90" : makeBlocks(r90),
-              "180" : makeBlocks(r180),
-              "270" : makeBlocks(r270)
+  //+ shapeBuilder :: [] -> color -> {color,blocks,center}
+  var shapeBuilder = fn.curry(function(shapeDesign,color) {
+    var blocks = makeBlocks(shapeDesign)
+    var centerIdx
+    for(var i = 0; i < blocks.length; i++) {
+      if(blocks[i].center) {
+        centerIdx = i
+        break
       }
-      return {color:color, blocks:rotations[angle]}
+    }
+    return {color:color, blocks:blocks, centerIdx:centerIdx}
+  })
+
+  //+ centerBlock :: shape -> block
+  var centerBlock = function(shape) {
+    return shape.blocks[shape.centerIdx]
+  }
+
+  var moveShape = fn.curry(function(moveFn, shape) {
+    shape.blocks = fn.map(moveFn,shape.blocks)
+    return shape
+  })
+
+  // var vSub = function(v1,v2) {
+  //   return fn.compose(g.set('x',v1.x-v2.x),g.set('y',v1.y-v2.y))(g.copy(v1))
+  //   // return {x:v1.x-v2.x, y:v1.y-v2.y}
+  // }
+
+  var neg = function(vector) {
+    vector.x *= -1
+    vector.y *= -1
+    return vector
+  }
+
+  var moveTo = fn.curry(function(toVector,vector) {
+    vector.x += toVector.x
+    vector.y += toVector.y
+    return vector
+  // return fn.compose(g.set('x',v1.x+v2.x),g.set('y',v1.y+v2.y))(g.copy(v2))
+    // return {x:v1.x+v2.x, y:v1.y+v2.y}
+  })
+
+  var rot = fn.curry(function(rotFn, center, vector) {
+    return fn.compose(
+                      //  g.trace("->"),
+                       moveTo(center),
+                      //  g.trace("R"),
+                       rotFn,
+                      //  g.trace("B"),
+                       moveTo(neg(g.copy(center))),
+                      //  g.trace('O'),
+                       g.id
+                  )(vector)
+  })
+
+  var rotR = rot(function(v){return fn.compose(g.set('x',-v.y), g.set('y',v.x))(v)})
+
+  var rotL = rot(function(v){return fn.compose(g.set('x',v.y), g.set('y',-v.x))(v)})
+
+  //+ rotShape :: (vector -> [vector] -> [vector]) -> shape -> shape
+  var rotShape = fn.curry(function(rotFn, shape) {
+    var center = g.copy(centerBlock(shape))
+    var blocks = fn.map(rotFn(center),shape.blocks)
+    shape.blocks = blocks
+    return shape
   })
 
 
-  sb. S = fn.curry(function shapeBuilderS(color,angle) {
-      var r0 =  [
-                       [0,1,1],
-                       [1,1,0]
-                     ]
-      var r90 = [
-                      [1,0],
-                      [1,1],
-                      [0,1]
-                      ]
-      var r180 = [
-                      [0,1,1],
-                      [1,1,0]
-                  ]
-      var r270 = [
-                      [1,0],
-                      [1,1],
-                      [0,1]
-                  ]
-      var color = color
-      var rotations =  {
-              "0" : makeBlocks(r0),
-              "90" : makeBlocks(r90),
-              "180" : makeBlocks(r180),
-              "270" : makeBlocks(r270)
-      }
-      return {color:color, blocks:rotations[angle]}
-  })
+  // public API
 
-  sb. Z = fn.curry(function shapeBuilderZ(color,angle) {
-      var r0 =  [
-                       [1,1,0],
-                       [0,1,1]
-                     ]
-      var r90 = [
-                   [0,1],
-                   [1,1],
-                   [1,0]
-                      ]
-      var r180 = [
-                      [1,1,0],
-                      [0,1,1]
-                  ]
-      var r270 = [
-                      [0,1],
-                      [1,1],
-                      [1,0]
-                  ]
-      var color = color
-      var rotations =  {
-              "0" : makeBlocks(r0),
-              "90" : makeBlocks(r90),
-              "180" : makeBlocks(r180),
-              "270" : makeBlocks(r270)
-      }
-      return {color:color, blocks:rotations[angle]}
-  })
+  //+ T :: color -> {color,blocks,center}
+  sb.T = shapeBuilder([
+                   [1,-1,1],
+                   [0,1,0]])
 
-  sb. L = fn.curry(function shapeBuilderL(color,angle) {
-      var r0 =  [
+  //+ S :: color -> {color,blocks,center}
+  sb. S = shapeBuilder([
+                       [0,-1,1],
+                       [1,1,0]])
+
+  //+ Z :: color -> {color,blocks,center}
+  sb. Z = shapeBuilder([
+                       [1,-1,0],
+                       [0,1,1]])
+
+  //+ L :: color -> {color,blocks,center}
+  sb. L = shapeBuilder([
                        [1,0],
-                       [1,0],
-                       [1,1]
-                     ]
-      var r90 = [
-                       [1,1,1],
-                       [1,0,0]
-                      ]
-      var r180 = [
-                       [1,1],
-                       [0,1],
-                       [0,1]
-                  ]
-      var r270 = [
-                       [0,0,1],
-                       [1,1,1]
-                  ]
-      var color = color
-      var rotations =  {
-              "0" : makeBlocks(r0),
-              "90" : makeBlocks(r90),
-              "180" : makeBlocks(r180),
-              "270" : makeBlocks(r270)
-      }
-      return {color:color, blocks:rotations[angle]}
-  })
+                       [-1,0],
+                       [1,1]])
 
-  sb. J = fn.curry(function shapeBuilderJ(color,angle) {
-      var r0 =  [
+  //+ J :: color -> {color,blocks,center}
+  sb. J = shapeBuilder([
                        [0,1],
-                       [0,1],
-                       [1,1]
-                     ]
-      var r90 = [
-                       [1,0,0],
-                       [1,1,1]
-                      ]
-      var r180 = [
-                       [1,1],
-                       [1,0],
-                       [1,0]
-                  ]
-      var r270 = [
-                       [1,1,1],
-                       [0,0,1]
-                  ]
-      var color = color
-      var rotations =  {
-              "0" : makeBlocks(r0),
-              "90" : makeBlocks(r90),
-              "180" : makeBlocks(r180),
-              "270" : makeBlocks(r270)
-      }
-      return {color:color, blocks:rotations[angle]}
-  })
+                       [0,-1],
+                       [1,1]])
 
-  sb. I = fn.curry(function shapeBuilderI(color,angle) {
-      var r0 =  [
+  //+ I :: color -> {color,blocks,center}
+  sb. I = shapeBuilder([
                    [0,1],
+                   [0,-1],
                    [0,1],
-                   [0,1],
-                   [0,1]
-                 ]
-      var r90 = [
-                   [0,0,0,0],
-                   [0,0,0,0],
-                   [1,1,1,1]
-                  ]
-      var color = color
-      var rotations =  {
-              "0" : makeBlocks(r0),
-              "90" : makeBlocks(r90),
-              "180" : makeBlocks(r0),
-              "270" : makeBlocks(r90)
-      }
-      return {color:color, blocks:rotations[angle]}
-  })
+                   [0,1]])
+
+  sb.fall = moveShape(g.move(0,1))
+
+  sb.moveL = moveShape(g.move(-1,0))
+
+  sb.moveR = moveShape(g.move(1,0))
+
+  sb.rotLShape = rotShape(rotL)
+
+  sb.rotRShape = rotShape(rotR)
+
 
   return sb;
 }));

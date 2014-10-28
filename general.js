@@ -1,13 +1,29 @@
+(function(root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define(factory);
+  } else if (typeof exports === 'object') {
+    module.exports = factory(require, exports, module);
+  } else {
+    root.g = factory();
+  }
+}(this, function(require, exports, module) {
+'use strict';
+
+
+var g = { };
+
+
+
 //+ id :: a -> a // identity function
-function id(a) {return a}
+g.id = function id(a) {return a}
 
 //+ rnd :: Integer -> Integer
-function rnd(modul) {
+g.rnd = function rnd(modul) {
   return Math.floor(((Math.random() * 1000000000) % modul))
 }
 
 //+ iff :: fn true -> fn false -> fn -> v -> bool -> fn
-var iff = fn.curry( function(ft, ff, b, v) {
+g.iff = fn.curry( function(ft, ff, b, v) {
   if(b(v) === true) {
       return ft(v)
   } else {
@@ -17,15 +33,15 @@ var iff = fn.curry( function(ft, ff, b, v) {
 
 
 //+ ifTrue :: fn -> bool
-var ifTrue = fn.curry(function(f,b) {
+g.ifTrue = fn.curry(function(f,b) {
   if(b === true) {return f}
 })
 
 //+ add :: Number -> Number -> Number
-var add = fn.curry(function(a1,a2) {return a1+a2})
+g.add = fn.curry(function(a1,a2) {return a1+a2})
 
 //+ zip :: (a -> a -> a) -> array -> array ->array
-var zip = fn.curry(function(fn,arr1,arr2) {
+g.zip = fn.curry(function(fn,arr1,arr2) {
   var result = []
   if( !arr1 || !arr2) return result
 
@@ -38,65 +54,65 @@ var zip = fn.curry(function(fn,arr1,arr2) {
 })
 
 //+ Maybe :: v -> Maybe(v)
-function Maybe(v) {
+g.Maybe = function Maybe(v) {
   return function() {return v}
 }
 
 //+ apply :: fn -> Maybe -> Maybe
-var apply = fn.curry(function(f,m) {
+g.apply = fn.curry(function(f,m) {
   return m() ? Maybe(f(m())) : Maybe(null)
 })
 
 //+ val :: Maybe(v) -> v
-var val = function(m) { return m() }
+g.val = function(m) { return m() }
 
 //+ either :: a -> b -> ???
-var either = fn.curry(function(defaultValue,alternative) {
+g.either = fn.curry(function(defaultValue,alternative) {
   return alternative ? alternative : defaultValue;
 })
 
 
-//+ coordinates :: [[]] -> [[Number,Number]]
-var shapeCoordinates = function(arr) {
-  var result = []
-  for( var r = 0; r < arr.length; r++) {
-    var cols = arr[r]
-    for(var c = 0; c < arr[r].length; c++) {
-      if( cols[c] !== 0 ) {
-        result.push([c,r])
-      }
-    }
-  }
-  return result
-}
+// //+ coordinates :: [[]] -> [[Number,Number]]
+// g.shapeCoordinates = function(arr) {
+//   var result = []
+//   for( var r = 0; r < arr.length; r++) {
+//     var cols = arr[r]
+//     for(var c = 0; c < arr[r].length; c++) {
+//       if( cols[c] !== 0 ) {
+//         result.push([c,r])
+//       }
+//     }
+//   }
+//   return result
+// }
 
 // + inRect :: number -> number -> number -> number -> number -> bool
-var inRect = fn.curry(function(left, top, width, height, x, y){
+g.inRect = fn.curry(function(left, top, width, height, x, y){
   return x <= left + width && left <= x && y >= top && y <= top + height
 })
 
 //+ not :: bool -> bool
-function not(b) { return !b}
+g.not = function not(b) { return !b}
 
 //+ dot :: game -> a // projection function
-var dot = fn.curry(function(coordinate, tupple) {
+g.dot = fn.curry(function(coordinate, tupple) {
   return tupple[coordinate]
 })
 
 //+ copyValidProperty :: pName -> pName -> tup -> tup
-var copyValidProperty = fn.curry( function(toPropName,fromPropName,tup) {
+g.copyValidProperty = fn.curry( function(toPropName,fromPropName,tup) {
   if(tup[fromPropName]) tup[toPropName] = tup[fromPropName]
   return tup
 })
 
 //+ assignValidProperty :: pname -> a -> tup -> tup
-var assignValidProperty = fn.curry(function(pname, value, tup) {
+g.assignValidProperty = fn.curry(function(pname, value, tup) {
     if(value && pname && tup ) {tup[pname] = value}
     return tup
 })
 
 //+ run : [fn] -> a -> b
-var run = fn.curry( function run(q, a) {
+g.run = fn.curry( function run(q, a) {
   var accu  = a
   while(q.length > 0) {
     var f = q.shift()
@@ -105,9 +121,51 @@ var run = fn.curry( function run(q, a) {
   return accu
 })
 
+//+ set :: k -> v -> o -> o
+g.set = fn.curry(function(key, value, object) {
+  object[key] = value
+  return object
+})
+
+//+ get ::
+g.get = fn.prop
+
+//+ map :: (a -> b) -> [a] -> [b]
+g.map = fn.curry(function(handler,collection) {
+  return fn.map(handler,collection)
+})
+
 
 //+ trace :: b -> a -> a
-var trace = fn.curry(function trace(b,a) {
+g.trace = fn.curry(function trace(b,a) {
   console.log("TRACE",b,":", a)
   return a
 })
+
+g.move = fn.curry(function(x, y, vector) {
+  vector.x += x
+  vector.y += y
+  return vector
+  // return fn.compose(set('x',vector.x + x),
+  //                    set('y', vector.y + y),
+  //                    copy)(vector)
+})
+
+//+ copy :: a -> a
+g.copy = function copy(origin) {
+  if( origin instanceof Array) return fn.map(copy,origin)
+
+  if( typeof origin === 'object') {
+    return Object.keys(origin).reduce( function(accu, key) {
+      accu[key] = typeof origin[key] === 'object' ? copy(origin[key]) : origin[key]
+      return accu
+    }, {})
+  }
+
+  return origin
+}
+
+
+// RETURN public object
+return g;
+}));
