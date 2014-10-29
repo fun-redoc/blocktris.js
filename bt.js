@@ -12,12 +12,20 @@ var vector = {
     return vs.some(vector.equal(v))
   }),
   intersect: function (vs1, vs2) {
-    var a1 = [].concat(vs1)
-    var a2 = [].concat(vs2)
+    var a1 = flatten(vs1)
+    var a2 = flatten(vs2)
     return a1.some(vector.contains(a2))
   },
 }
 
+
+var flatten = function flatten(arr) {
+  if(!(arr instanceof Array)) return [arr]
+  return fn.reduce( function(accu, val) {
+    var isINstanceOfArray = val instanceof Array
+    return fn.concat(accu, isINstanceOfArray ? flatten(val) : val)
+  },[], arr)
+}
 
 var shape = sb.L("red")
 var clone = g.copy(shape)
@@ -35,6 +43,10 @@ var shape3 = [block5, block4]
 var shape4 = [block6, block7]
 var array_of_shapes = [shape2,shape3]
 
+// console.log(flatten(array_of_shapes))
+
+assert.deepEqual(flatten(array_of_shapes),fn.concat(block2,block4,block5,block4))
+
 assert(vector.equal(block1,block2))
 assert.notEqual(vector.equal(block1,block3))
 
@@ -49,6 +61,8 @@ assert.notEqual(vector.intersect(shape3, shape2))
 assert.notEqual(vector.intersect(shape3, shape))
 
 assert.notEqual(vector.intersect(array_of_shapes, shape4))
+// console.log(array_of_shapes)
+// console.log(shape)
 assert(vector.intersect(array_of_shapes, shape))
 
 assert.deepEqual(block1,block2)
