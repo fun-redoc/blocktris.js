@@ -198,6 +198,7 @@ var tick = fn.curry(function(nextShapeMaker, currentShape) {
   var fallenShape = sb.fall(g.copy(currentShape))
 
   var canFall = fn.filter(notInGameField, fallenShape.blocks).length === 0
+  canFall &= fn.filter()
 
   //TODO check if there are shared blocks in tthe pithed array and fall black
 
