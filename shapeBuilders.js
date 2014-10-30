@@ -135,6 +135,8 @@ var sb = { };
 
   sb.rotRShape = rotShape(rotR)
 
+  //+ intersect :: [a] -> [a] -> boolean
+  sb.intersect = g.intersect(g.equal2D)
 
   return sb;
 }));

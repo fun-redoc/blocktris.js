@@ -4,29 +4,6 @@ var sb = require("./shapeBuilders.js")
 var assert = require('assert')
 
 
-var vector = {
-  equal: fn.curry(function(v1,v2) {
-    return v1['x'] === v2['x'] && v1['y'] === v2['y']
-  }),
-  contains: fn.curry(function(vs, v) {
-    return vs.some(vector.equal(v))
-  }),
-  intersect: function (vs1, vs2) {
-    var a1 = flatten(vs1)
-    var a2 = flatten(vs2)
-    return a1.some(vector.contains(a2))
-  },
-}
-
-
-var flatten = function flatten(arr) {
-  if(!(arr instanceof Array)) return [arr]
-  return fn.reduce( function(accu, val) {
-    var isINstanceOfArray = val instanceof Array
-    return fn.concat(accu, isINstanceOfArray ? flatten(val) : val)
-  },[], arr)
-}
-
 var shape = sb.L("red")
 var clone = g.copy(shape)
 
@@ -45,25 +22,25 @@ var array_of_shapes = [shape2,shape3]
 
 // console.log(flatten(array_of_shapes))
 
-assert.deepEqual(flatten(array_of_shapes),fn.concat(block2,block4,block5,block4))
+assert.deepEqual(g.flatten(array_of_shapes),fn.concat(block2,block4,block5,block4))
 
-assert(vector.equal(block1,block2))
-assert.notEqual(vector.equal(block1,block3))
+assert(g.equal2D(block1,block2))
+assert.notEqual(g.equal2D(block1,block3))
 
-assert(vector.contains(shape, block2))
-assert.notEqual(vector.contains(shape, block4))
+assert(g.contains(g.equal2D, shape, block2))
+assert.notEqual(g.contains(g.equal2D, shape, block4))
 
-assert(vector.intersect(shape, shape2))
-assert(vector.intersect(shape2, shape))
-assert(vector.intersect(shape, block2))
-assert(vector.intersect(shape, block1))
-assert.notEqual(vector.intersect(shape3, shape2))
-assert.notEqual(vector.intersect(shape3, shape))
+assert(g.intersect(g.equal2D, shape, shape2))
+assert(g.intersect(g.equal2D, shape2, shape))
+assert(g.intersect(g.equal2D, shape, block2))
+assert(g.intersect(g.equal2D, shape, block1))
+assert.notEqual(g.intersect(g.equal2D, shape3, shape2))
+assert.notEqual(g.intersect(g.equal2D, shape3, shape))
 
-assert.notEqual(vector.intersect(array_of_shapes, shape4))
+assert.notEqual(sb.intersect(array_of_shapes, shape4))
 // console.log(array_of_shapes)
 // console.log(shape)
-assert(vector.intersect(array_of_shapes, shape))
+assert(sb.intersect(array_of_shapes, shape))
 
 assert.deepEqual(block1,block2)
 assert.notDeepEqual(block1,block3)

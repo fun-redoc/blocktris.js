@@ -165,6 +165,30 @@ g.copy = function copy(origin) {
   return origin
 }
 
+  //+ equal2D :: {x,y} -> {x,y} -> boolean
+  g.equal2D = fn.curry(function(v1,v2) {
+    return v1['x'] === v2['x'] && v1['y'] === v2['y']
+  })
+
+  //+ flatten :: [[a]] ->[a]
+  g.flatten = function flatten(arr) {
+    if(!(arr instanceof Array)) return [arr]
+    return fn.reduce( function(accu, val) {
+      var isINstanceOfArray = val instanceof Array
+      return fn.concat(accu, isINstanceOfArray ? flatten(val) : val)
+    },[], arr)
+  }
+
+  //+ contains :: (p :: a -> boolean) -> [a] -> a -> boolean
+  g.contains = fn.curry(function(p, vs, v) {
+    return vs.some(p(v))
+  }),
+
+  //+ intersect :: ((p :: a -> boolean), [a],[a]) -> boolean
+  g.intersect = fn.curry(function (p, arr1, arr2) {
+    return g.flatten(arr1).some(g.contains(p,g.flatten(arr2)))
+  })
+
 
 // RETURN public object
 return g;
