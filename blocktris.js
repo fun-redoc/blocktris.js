@@ -52,13 +52,13 @@ function blockMoveBy($div, x,y) {
 
     function drawShapeAt(panel, shape) {
         fn.each( function(pair) {
-            panel.append( blockAt(pair.x, pair.y,shape.color, '.'))
-        },shape.blocks)
+            panel.append( blockAt(pair.x, pair.y,pair.color, '.'))
+        },shape)
     }
 
     function updateSpriteByShape($panel, shape) {
       $panel.children().each(function(idx) {
-        positionBlock($(this), shape.blocks[idx].x,shape.blocks[idx].y)
+        positionBlock($(this), shape[idx].x,shape[idx].y)
       })
       return $panel
     }
@@ -196,12 +196,12 @@ function render($panel, game) {
 var tick = fn.curry(function(nextShapeMaker, currentShape) {
   return function(game) {
     var fallenShape = sb.fall(g.copy(currentShape))
-    var canFall = fn.filter(notInGameField, fallenShape.blocks).length === 0
+    var canFall = fn.filter(notInGameField, fallenShape).length === 0
   if(canFall && !sb.intersect( game.fallenShapes, fallenShape ) ) {
         game.currentShape = fallenShape;
     } else {
         // put color into each block!!
-        var droppedShape = g.copy(game.currentShape.blocks)
+        var droppedShape = g.copy(game.currentShape)
         game.fallenShapes.push(droppedShape)
         game.dropShapeNotification(droppedShape)
         game.currentShape = nextShapeMaker();

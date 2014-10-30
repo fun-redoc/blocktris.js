@@ -13,41 +13,29 @@
 var sb = { };
 
 
-  var makeBlocks = fn.memoize(function(a) {
+  var makeBlocks = function(a,color) {
     return a.reduce( function(accuRow, row, idxRow) {
       return accuRow.concat(row.reduce( function(accu, col, idxCol) {
-              return col !== 0 ? accu.concat({x:idxCol, y:idxRow, center: (col === -1)}) : accu;
+              return col !== 0 ? accu.concat({x:idxCol, y:idxRow, center: (col === -1), color: color}) : accu;
             },[]))
     }, [])
-  })
+  }
 
-  //+ shapeBuilder :: [] -> color -> {color,blocks,center}
+  //+ shapeBuilder :: [] -> color -> [blocks]
   var shapeBuilder = fn.curry(function(shapeDesign,color) {
-    var blocks = makeBlocks(shapeDesign)
-    var centerIdx
-    for(var i = 0; i < blocks.length; i++) {
-      if(blocks[i].center) {
-        centerIdx = i
-        break
-      }
-    }
-    return {color:color, blocks:blocks, centerIdx:centerIdx}
+    var blocks = makeBlocks(shapeDesign, color)
+    return blocks
   })
 
   //+ centerBlock :: shape -> block
   var centerBlock = function(shape) {
-    return shape.blocks[shape.centerIdx]
+    return fn.filter(function(b) {return shape.center }, shape)[0]
   }
 
   var moveShape = fn.curry(function(moveFn, shape) {
-    shape.blocks = fn.map(moveFn,shape.blocks)
+    shape = fn.map(moveFn,shape)
     return shape
   })
-
-  // var vSub = function(v1,v2) {
-  //   return fn.compose(g.set('x',v1.x-v2.x),g.set('y',v1.y-v2.y))(g.copy(v1))
-  //   // return {x:v1.x-v2.x, y:v1.y-v2.y}
-  // }
 
   var neg = function(vector) {
     vector.x *= -1
@@ -59,8 +47,6 @@ var sb = { };
     vector.x += toVector.x
     vector.y += toVector.y
     return vector
-  // return fn.compose(g.set('x',v1.x+v2.x),g.set('y',v1.y+v2.y))(g.copy(v2))
-    // return {x:v1.x+v2.x, y:v1.y+v2.y}
   })
 
   var rot = fn.curry(function(rotFn, center, vector) {
@@ -83,9 +69,8 @@ var sb = { };
   //+ rotShape :: (vector -> [vector] -> [vector]) -> shape -> shape
   var rotShape = fn.curry(function(rotFn, shape) {
     var center = g.copy(centerBlock(shape))
-    var blocks = fn.map(rotFn(center),shape.blocks)
-    shape.blocks = blocks
-    return shape
+    var blocks = fn.map(rotFn(center),shape)
+    return blocks
   })
 
 
