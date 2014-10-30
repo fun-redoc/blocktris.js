@@ -194,23 +194,18 @@ function render($panel, game) {
 
 //+ tick :: (fn :: [shapes] -> shape) -> shape -> (fn :: game -> game)
 var tick = fn.curry(function(nextShapeMaker, currentShape) {
-
-  var fallenShape = sb.fall(g.copy(currentShape))
-
-  var canFall = fn.filter(notInGameField, fallenShape.blocks).length === 0
-  canFall &= intersects( fallenShapes, fallenShape ) // TODO no acces to fallen shapes here
-
-  //TODO check if there are shared blocks in tthe pithed array and fall black
-
-  return canFall ?
-          function(game) {
-              game.currentShape = fallenShape; return game
-          } :
-          function(game) {
-                   var droppedShape = g.copy(game.currentShape)
-                   game.fallenShapes.push(droppedShape)
-                   game.dropShapeNotification(droppedShape)
-                   game.currentShape = nextShapeMaker(); return game
-          }
-  // TODO collision with other shapes
+  return function(game) {
+    var fallenShape = sb.fall(g.copy(currentShape))
+    var canFall = fn.filter(notInGameField, fallenShape.blocks).length === 0
+  if(canFall && !sb.intersect( game.fallenShapes, fallenShape ) ) {
+        game.currentShape = fallenShape;
+    } else {
+        // put color into each block!!
+        var droppedShape = g.copy(game.currentShape.blocks)
+        game.fallenShapes.push(droppedShape)
+        game.dropShapeNotification(droppedShape)
+        game.currentShape = nextShapeMaker();
+    }
+    return game
+  }
 })
