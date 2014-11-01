@@ -54,13 +54,13 @@ g.zip = fn.curry(function(fn,arr1,arr2) {
 })
 
 //+ Maybe :: v -> Maybe(v)
-g.Maybe = function Maybe(v) {
+g.Maybe = function maybe(v) {
   return function() {return v}
 }
 
 //+ apply :: fn -> Maybe -> Maybe
 g.apply = fn.curry(function(f,m) {
-  return m() ? Maybe(f(m())) : Maybe(null)
+  return m() ? maybe(f(m())) : maybe(null)
 })
 
 //+ val :: Maybe(v) -> v
@@ -152,7 +152,7 @@ g.copy = function copy(origin) {
 
   //+ equal2D :: {x,y} -> {x,y} -> boolean
   g.equal2D = fn.curry(function(v1,v2) {
-    return v1['x'] === v2['x'] && v1['y'] === v2['y']
+    return v1.x === v2.x && v1.y === v2.y
   })
 
   //+ flatten :: [[a]] ->[a]
@@ -167,7 +167,7 @@ g.copy = function copy(origin) {
   //+ contains :: (p :: a -> boolean) -> [a] -> a -> boolean
   g.contains = fn.curry(function(p, vs, v) {
     return vs.some(p(v))
-  }),
+  })
 
   //+ intersect :: ((p :: a -> boolean), [a],[a]) -> boolean
   g.intersect = fn.curry(function (p, arr1, arr2) {

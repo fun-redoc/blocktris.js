@@ -1,5 +1,5 @@
-todo
-- drop on space
+TODO
+- restart function
 - get rid of jQuery use plain DOM
 - flatten dropped blocks to avoid flattening on collision detection
 - try out position:fixes or position:relative
@@ -14,5 +14,9 @@ todo
 - allow for backgrounds
 - make noises
 - play background music
-work
-done
+
+WORK
+- replace setInterval ba requestAnimationFrame
+- drop on space
+
+DONE
