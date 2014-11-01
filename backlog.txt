@@ -4,7 +4,6 @@ TODO
 - flatten dropped blocks to avoid flattening on collision detection
 - try out position:fixes or position:relative
 - drop on contact with dropped blocks
-- remove completed rows
 - animate removal
 - count points
 - next level
@@ -16,7 +15,8 @@ TODO
 - play background music
 
 WORK
-- replace setInterval ba requestAnimationFrame
-- drop on space
+- remove completed rows
 
 DONE
+- replace setInterval ba requestAnimationFrame
+- drop on space ( arrow down)

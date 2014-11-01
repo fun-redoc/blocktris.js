@@ -84,7 +84,7 @@ $(document).ready( function() {
 
 // Controller Code
 
-  var tick = function(nextShapeMaker) {
+  var tick = fn.curry(function(nextShapeMaker) {
     return function(game) {
       var fallenShape = sb.fall(g.copy(game.currentShape))
       var canFall = shapeValidPositionInGame(game, fallenShape)
@@ -100,7 +100,7 @@ $(document).ready( function() {
       }
       return game
     }
-  }
+  })
 
   // + inGameField :: block -> bool
   var inGameField = function(block) {
@@ -125,6 +125,7 @@ $(document).ready( function() {
   })
 
 
+
   function gameController(shapes, $currentShape, $pitchedShapes) {
     var game = {
                   fallenShapes : [],
@@ -139,22 +140,49 @@ $(document).ready( function() {
       drawShapeAt($pitchedShapes, shape, shape.color)
     })
 
-    var updateQueue = []
     var nextShapeMaker = randomShape(shapes)
-    game.currentShape = nextShapeMaker()
+
     var nextTick = tick(nextShapeMaker)
+    var updateQueue = [function(game) {
+        game.currentShape = nextShapeMaker()
+        return game
+    }]
 
     var frame = (function() {
-      var tickTimer
-      var frameTimer
+      var time
+      var id
+      var tickX = function tick1000 (now) {
+          var start = start || now
+          var duration = 1000
+          return function(time,dt) {
+            if( start + duration <= time) {
+              updateQueue.push(nextTick)
+              start = null
+              tickX = tick1000(time)
+            }
+          }
+      }(new Date().getTime())
 
-      return {stop: function() {
-                      clearInterval(tickTimer)
-                      clearInterval(frameTimer)
+      return {
+               stop: function() {
+                  cancelAnimationFrame(id)
+                  time = null
                },
                start: function() {
-                        tickTimer = setInterval(function() { updateQueue.push(nextTick) }, 1000)
-                        frameTimer = setInterval(function() { render($currentShape, g.run(updateQueue,game))  }, 100)
+                 function update() {
+                   id = requestAnimationFrame(update)
+                    var now = new Date().getTime(),
+                    dt = now - (time || now);
+                    time = now;
+
+                    if( updateQueue.length > 0 ) {
+                      render($currentShape, g.run(updateQueue,game))
+                    }
+
+                    tickX(now,dt)
+
+                 }
+                 update()
                }
             }
 
@@ -176,12 +204,25 @@ $(document).ready( function() {
             frame.start()
         }
         if ( event.which == 40 /*fall*/ ) {
-            updateQueue.push(function(game) {
-              // TODO left boud!!
-              // console.log("FALL")
-              game.currentShape = sb.fall(game.currentShape)
-              return game
-            })
+            updateQueue.push( function(game) {
+              var canFall = true
+                while(canFall) {
+                  var fallenShape = sb.fall(g.copy(game.currentShape))
+                  var canFall = shapeValidPositionInGame(game, fallenShape)
+                  if(canFall) {
+                      game.currentShape = fallenShape;
+                  } else {
+                      // put color into each block!!
+                      var droppedShape = g.copy(game.currentShape)
+                      // TODO make fallen shapes flatt, to avoid flatten in the intersection
+                      game.fallenShapes.push(droppedShape)
+                      game.dropShapeNotification(droppedShape)
+                      game.currentShape = nextShapeMaker();
+                  }
+                }
+                return game
+            }
+            )
         }
         if ( event.which == 37 /*left*/ ) {
             updateQueue.push(maybeTransformCurrentShape(sb.moveL))
