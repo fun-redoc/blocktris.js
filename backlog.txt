@@ -1,4 +1,5 @@
 TODO
+- refactor drop function, mitigate code doubling with tick Funtion, make it reusable for collisions
 - restart function
 - get rid of jQuery use plain DOM
 - flatten dropped blocks to avoid flattening on collision detection
