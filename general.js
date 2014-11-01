@@ -71,24 +71,9 @@ g.either = fn.curry(function(defaultValue,alternative) {
   return alternative ? alternative : defaultValue;
 })
 
-
-// //+ coordinates :: [[]] -> [[Number,Number]]
-// g.shapeCoordinates = function(arr) {
-//   var result = []
-//   for( var r = 0; r < arr.length; r++) {
-//     var cols = arr[r]
-//     for(var c = 0; c < arr[r].length; c++) {
-//       if( cols[c] !== 0 ) {
-//         result.push([c,r])
-//       }
-//     }
-//   }
-//   return result
-// }
-
 // + inRect :: number -> number -> number -> number -> number -> bool
 g.inRect = fn.curry(function(left, top, width, height, x, y){
-  return x <= left + width && left <= x && y >= top && y <= top + height
+  return x < left + width && left <= x && y >= top && y < top + height
 })
 
 //+ not :: bool -> bool

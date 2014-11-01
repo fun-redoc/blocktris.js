@@ -29,12 +29,13 @@ var sb = { };
 
   //+ centerBlock :: shape -> block
   var centerBlock = function(shape) {
-    return fn.filter(function(b) {return shape.center }, shape)[0]
+    return fn.filter(function(b) {
+		return b.center
+	}, shape)[0]
   }
 
   var moveShape = fn.curry(function(moveFn, shape) {
-    shape = fn.map(moveFn,shape)
-    return shape
+    return fn.map(moveFn,g.copy(shape))
   })
 
   var neg = function(vector) {
@@ -69,7 +70,7 @@ var sb = { };
   //+ rotShape :: (vector -> [vector] -> [vector]) -> shape -> shape
   var rotShape = fn.curry(function(rotFn, shape) {
     var center = g.copy(centerBlock(shape))
-    var blocks = fn.map(rotFn(center),shape)
+    var blocks = fn.map(rotFn(center),g.copy(shape))
     return blocks
   })
 

@@ -1,5 +1,10 @@
 
 $(document).ready( function() {
+    $("div#panel")
+      .width(BlockSize*GameFieldCols)
+      .height(BlockSize*GameFieldRows)
+      .offset({ top: GameFieldPosY, left:GameFieldPosX} )
+
     gameController( [
                       sb.I("orange"),
                       sb.T("red"),
@@ -21,7 +26,9 @@ var GameFieldCols = 10
 
 // +positionBlock :: $div -> x -> y -> $div
 var positionBlock = fn.curry(function($div,x,y) {
+	// whay do i have to add offset coordinates??
   return $div.offset({ top: y*BlockSize + GameFieldPosY, left: x*BlockSize + GameFieldPosX})
+  // return $div.offset({ top: y*BlockSize, left: x*BlockSize })
 })
 
 // + inGameField :: block -> bool
@@ -33,6 +40,19 @@ var inGameField = function(block) {
 //+ notInGameField :: a -> bool
 var notInGameField = fn.compose(g.not, inGameField)
 
+var shapeOutOfField = function(shape){return fn.filter(notInGameField, shape).length !== 0 }
+
+var shapeValidPositionInGame = function(game, shape) {
+  return !shapeOutOfField(shape) && !sb.intersect( game.fallenShapes, shape )
+}
+
+var maybeTransformCurrentShape = fn.curry(function(transformFn, game) {
+  var rotShape = transformFn(game.currentShape)
+  if( shapeValidPositionInGame(game, rotShape)) {
+    game.currentShape = rotShape
+  }
+  return game
+})
 
 function blockAt(col, row, color,mark) {
     var $block =  $("<div/>")
@@ -40,15 +60,19 @@ function blockAt(col, row, color,mark) {
         .css({backgroundColor: color})
         .width(BlockSize)
         .height(BlockSize)
-        .offset({ top: row*BlockSize + GameFieldPosY, left: col*BlockSize + GameFieldPosX})
+	// why do i have to leave out the offst coordinates???
+        .offset({ top: row*BlockSize, left: col*BlockSize})
+        // .offset({ top: row*BlockSize + GameFieldPosY, left: col*BlockSize + GameFieldPosX})
         .html(mark)
+
     return $block
+    // return positionBlock($block, col, row)
 }
 
-function blockMoveBy($div, x,y) {
-  $div.offset({ top: $div.offset().top + y*BlockSize, left: $div.offset().left + x*BlockSize})
-  return $div
-}
+// function blockMoveBy($div, x,y) {
+//   $div.offset({ top: $div.offset().top + y*BlockSize, left: $div.offset().left + x*BlockSize})
+//   return $div
+// }
 
     function drawShapeAt(panel, shape) {
         fn.each( function(pair) {
@@ -64,12 +88,6 @@ function blockMoveBy($div, x,y) {
     }
 
 
-
-//+ collision :: game -> bool
-var collision = function(game) {
-  // TODO
-  return false
-}
 
 //+ randomShape :: [sb.] -> ???
 function randomShape(sbs) {
@@ -106,7 +124,7 @@ function gameController(shapes, $currentShape, $pitchedShapes) {
                     clearInterval(frameTimer)
              },
              start: function() {
-                      tickTimer = setInterval(function() { update.push(nextTick(game.currentShape)) }, 1000)
+                      tickTimer = setInterval(function() { update.push(nextTick) }, 1000)
                       frameTimer = setInterval(function() { render($currentShape, g.run(update,game))  }, 100)
              }
           }
@@ -143,39 +161,35 @@ function gameController(shapes, $currentShape, $pitchedShapes) {
           event.preventDefault()
       }
       if ( event.which == 37 /*left*/ ) {
-          update.push(function(game) {
-            // TODO left boud!!
-            // console.log("LEFT")
-            game.currentShape = sb.moveL(game.currentShape)
-            return game
-          })
+          update.push(maybeTransformCurrentShape(sb.moveL))
+          //   function(game) {
+          //   var movedShape = sb.moveL(game.currentShape)
+          //   if( shapeValidPositionInGame(game,movedShape) ) {
+          //     game.currentShape =  movedShape
+          //   }
+          //   return game
+          // })
           // game.left()
           event.preventDefault()
       }
       if ( event.which == 39 /*right*/ ) {
-          update.push(function(game) {
-            // TODO rigth boud!!
-            // console.log("RIGHT")
-            game.currentShape = sb.moveR(game.currentShape)
-            return game
-          })
+          update.push(maybeTransformCurrentShape(sb.moveR))
+          //   function(game) {
+          //   var movedShape = sb.moveR(game.currentShape)
+          //   if( shapeValidPositionInGame(game,movedShape) ) {
+          //     game.currentShape =  movedShape
+          //   }
+          //   return game
+          // })
           // game.right()
           event.preventDefault()
       }
       if ( event.which == 89 /*y*/ ) {
-          update.push(function(game) {
-            // TODO bounds!!
-            game.currentShape = sb.rotRShape(game.currentShape)
-            return game
-          })
+          update.push(maybeTransformCurrentShape(sb.rotRShape))
           event.preventDefault()
       }
       if ( event.which == 88 /*x*/ ) {
-          update.push(function(game) {
-            // TODO bounds!!
-            game.currentShape = sb.rotLShape(game.currentShape)
-            return game
-          })
+          update.push(maybeTransformCurrentShape(sb.rotLShape))
           event.preventDefault()
       }
   })
@@ -192,20 +206,20 @@ function render($panel, game) {
 }
 
 
-//+ tick :: (fn :: [shapes] -> shape) -> shape -> (fn :: game -> game)
-var tick = fn.curry(function(nextShapeMaker, currentShape) {
+var tick = function(nextShapeMaker) {
   return function(game) {
-    var fallenShape = sb.fall(g.copy(currentShape))
-    var canFall = fn.filter(notInGameField, fallenShape).length === 0
-  if(canFall && !sb.intersect( game.fallenShapes, fallenShape ) ) {
+    var fallenShape = sb.fall(g.copy(game.currentShape))
+    var canFall = shapeValidPositionInGame(game, fallenShape)
+    if(canFall) {
         game.currentShape = fallenShape;
     } else {
         // put color into each block!!
         var droppedShape = g.copy(game.currentShape)
+        // TODO make fallen shapes flatt, to avoid flatten in the intersection
         game.fallenShapes.push(droppedShape)
         game.dropShapeNotification(droppedShape)
         game.currentShape = nextShapeMaker();
     }
     return game
   }
-})
+}
