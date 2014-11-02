@@ -43,6 +43,73 @@ $(document).ready( function() {
       return function() {return sbs[g.rnd(mod)]}
   }
 
+var rowSums = function rowSums(field) { return fn.reduce( function(accu, val ) {
+    var valX = val.x  + 1
+    if( accu[val.y] ) {
+      accu[val.y] += valX
+    } else {
+      accu[val.y] = valX
+    }
+    return accu
+  }, [], field)
+}
+
+//+ someRowComplete :: (removeHandler :: block -> void) -> (moveHandler :: block -> block -> void) -> field -> field
+var someRowComplete = fn.curry(
+  function someRowComplete(removeHandler, moveHandler, maxColNumber, field) {
+    // IDEA: sum of als Blocks x coordinates [1..maxColNumber] must be sum(1..MaxColNumber) otherwise the row is not complettly filled
+    var rowSumsArr = rowSums(field)
+    var expectedRowSum = g.gausSum(maxColNumber)
+    var droppedRows = fn.map( function(v) {
+      if( v === expectedRowSum ) {
+        return true
+      }
+      return false
+    }, rowSumsArr)
+
+    var rowsToDrop =
+      fn.compose(
+          fn.reverse,
+		      g.trace("afer get"),
+		      g.get("movesPerRow"),
+		      g.trace("after reduce"),
+          g.reduce(
+            function(a,v,i) {
+              a.movesPerRow[i] = (a.movesPerRow[i] || 0 ) + a.maxMoves
+              if(v) {a.maxMoves++}
+              return a
+            },
+            {movesPerRow:[], maxMoves:0 }),
+          g.trace("bevore reduce"),
+          fn.reverse)(droppedRows)
+
+
+    var fieldWithHoles = fn.filter(
+      function(block) {
+        var row = block.y
+        if( rowSumsArr[row] === expectedRowSum ) {
+          removeHandler(block)
+          return false
+        }
+        return true
+      }, field )
+
+
+      var shrunkField = fn.reduce(
+        function(a,v,i) {
+          var row = v.y
+          var rowsToMove = rowsToDrop[row] || 0
+          var blockToMove = g.copy(v)
+          blockToMove.y += rowsToMove
+          if( rowsToMove ) {
+            moveHandler(v,blockToMove)
+          }
+          return a.concat(blockToMove)
+        }, [], fieldWithHoles)
+
+      return shrunkField
+})
+
 // View Code
 
   function render($panel, game) {
@@ -59,7 +126,9 @@ $(document).ready( function() {
           .css({backgroundColor: color})
           .width(BlockSize)
           .height(BlockSize)
-  	// why do i have to leave out the offst coordinates???
+          .attr("col", col)
+          .attr("row", row)
+  	       // why do i have to leave out the offst coordinates???
           .offset({ top: row*BlockSize, left: col*BlockSize})
           // .offset({ top: row*BlockSize + GameFieldPosY, left: col*BlockSize + GameFieldPosX})
           .html(mark)
@@ -77,34 +146,32 @@ $(document).ready( function() {
   function updateSpriteByShape($panel, shape) {
     $panel.children().each(function(idx) {
       positionBlock($(this), shape[idx].x,shape[idx].y)
+      $(this).attr("col", shape[idx].x).attr("row", shape[idx].y)
     })
     return $panel
   }
 
+var moveSprite = fn.curry(function moveSprite($panel, fromBlock, toBlock) {
+    var col = fromBlock.x
+    var row = fromBlock.y
+    $div = $("div[row=" + row + "][col=" + col + "]")
+    positionBlock($div, toBlock.x, toBlock.y)
+    $div.attr("row", toBlock.y).attr("col",toBlock.x)
+    // TODO some animation (fly away in random direction - ballistically)
+})
+
+
+  var removeFromView = fn.curry(function removeFromView($pitchedShapesView, block) {
+      var col = block.x
+      var row = block.y
+      $div = $("div[row=" + row + "][col=" + col + "]")
+      // TODO some animation (fly away in random direction - ballistically)
+      $div.remove()
+  })
+
 
 // Controller Code
 
-  var tick = fn.curry(function(nextShapeMaker, repeat) {
-    return function(game) {
-      var canFall = true
-      while(canFall) {
-        var fallenShape = sb.fall(g.copy(game.currentShape))
-        canFall = shapeValidPositionInGame(game, fallenShape)
-        if(canFall) {
-            game.currentShape = fallenShape;
-        } else {
-            // put color into each block!!
-            var droppedShape = g.copy(game.currentShape)
-            // TODO make fallen shapes flatt, to avoid flatten in the intersection
-            game.fallenShapes.push(droppedShape)
-            game.dropShapeNotification(droppedShape)
-            game.currentShape = nextShapeMaker();
-        }
-        canFall = canFall && repeat
-      }
-      return game
-    }
-  })
 
   // + inGameField :: block -> bool
   var inGameField = function(block) {
@@ -145,7 +212,11 @@ $(document).ready( function() {
     })
 
     game.dropShapeObeservers.push(function dropCompletedBottomRow(shape) {
-      drawShapeAt($pitchedShapes, shape, shape.color)
+      var lastRowComplete = someRowComplete(removeFromView($pitchedShapes),
+                                            moveSprite($pitchedShapes),
+                                            GameFieldCols,
+                                            game.fallenShapes)
+      game.fallenShapes = lastRowComplete
     })
 
 
@@ -231,3 +302,26 @@ $(document).ready( function() {
         event.preventDefault()
     })
   }
+
+
+var tick = fn.curry(function(nextShapeMaker, repeat) {
+  return function(game) {
+    var canFall = true
+    while(canFall) {
+      var fallenShape = sb.fall(g.copy(game.currentShape))
+      canFall = shapeValidPositionInGame(game, fallenShape)
+      if(canFall) {
+          game.currentShape = fallenShape;
+      } else {
+          // put color into each block!!
+          var droppedShape = g.copy(game.currentShape)
+          // TODO make fallen shapes flatt, to avoid flatten in the intersection
+          game.fallenShapes = game.fallenShapes.concat(droppedShape)
+          game.dropShapeNotification(droppedShape)
+          game.currentShape = nextShapeMaker();
+      }
+      canFall = canFall && repeat
+    }
+    return game
+  }
+})

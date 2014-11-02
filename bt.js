@@ -46,4 +46,66 @@ assert.deepEqual(block1,block2)
 assert.notDeepEqual(block1,block3)
 
 
+// Development, check full row
+var empty = []
+var lastRowIncomple = sb.shapeBuilder([ [1],
+                              [0],
+                              [1,-1,0,1,1],
+                              [1,1]])("color")
+var lastRowFilled = sb.shapeBuilder([ [1],
+                              [1,-1,1,1,1]])("color")
+
+var gausSum = g.gausSum
+
+var rowSums = function rowSums(field) { return fn.reduce( function(accu, val ) {
+    var valX = val.x  + 1
+    if( accu[val.y] ) {
+      accu[val.y] += valX
+    } else {
+      accu[val.y] = valX
+    }
+    return accu
+  }, [], field)
+}
+
+assert(rowSums(lastRowFilled)[1] === gausSum(5))
+assert(rowSums(lastRowIncomple)[3] !== gausSum(5))
+assert(rowSums(lastRowIncomple)[3] === 3)
+assert(rowSums(empty)[0] !== gausSum(5))
+
+//+ lastRowComplete :: (handler :: n -> field-> field)-> field -> field
+var lastRowComplete = fn.curry(
+  function lastRowComplete(handler, maxColNumber, field) {
+    var rowSumsArr = rowSums(field)
+    var lastRow = rowSumsArr.length - 1
+    if( lastRow > 0 ) {
+      if( rowSumsArr[lastRow] == gausSum(maxColNumber) ) {
+        return handler(lastRow, field)
+      }
+    }
+    return field
+  }
+)
+
+assert.deepEqual(lastRowComplete(
+  function(n,field){
+    return fn.filter(function(block) {
+      return block.y !== n
+    }, field)
+  }, 5, lastRowFilled), [ { x: 0, y: 0, center: false, color: 'color' } ])
+
+assert.deepEqual(lastRowComplete(
+  function(n,field){
+    return fn.filter(function(block) {
+      return block.y !== n
+    }, field)
+  }, 5, lastRowIncomple), lastRowIncomple)
+
+assert.deepEqual(lastRowComplete(
+  function(n,field){
+    return fn.filter(function(block) {
+      return block.y !== n
+    }, field)
+  }, 5, empty), empty)
+
 console.log("--------------------------------------------")

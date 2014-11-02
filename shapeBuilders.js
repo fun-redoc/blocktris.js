@@ -76,6 +76,7 @@ var sb = { };
 
 
   // public API
+  sb.shapeBuilder = shapeBuilder
 
   //+ T :: color -> {color,blocks,center}
   sb.T = shapeBuilder([

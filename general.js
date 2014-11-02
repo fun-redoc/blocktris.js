@@ -12,7 +12,10 @@
 
 var g = { };
 
-
+//+ gausSum :: int -> int
+g.gausSum = function(n) {
+  return (n+1)*(n/2)
+}
 
 //+ id :: a -> a // identity function
 g.id = function id(a) {return a}
@@ -174,6 +177,7 @@ g.copy = function copy(origin) {
     return g.flatten(arr1).some(g.contains(p,g.flatten(arr2)))
   })
 
+  g.reduce = fn.curry(function (handler, accumulator, collection) { return fn.reduce(handler, accumulator, collection) })
 
 // RETURN public object
 return g;
