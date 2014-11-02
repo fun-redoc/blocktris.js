@@ -84,19 +84,23 @@ $(document).ready( function() {
 
 // Controller Code
 
-  var tick = fn.curry(function(nextShapeMaker) {
+  var tick = fn.curry(function(nextShapeMaker, repeat) {
     return function(game) {
-      var fallenShape = sb.fall(g.copy(game.currentShape))
-      var canFall = shapeValidPositionInGame(game, fallenShape)
-      if(canFall) {
-          game.currentShape = fallenShape;
-      } else {
-          // put color into each block!!
-          var droppedShape = g.copy(game.currentShape)
-          // TODO make fallen shapes flatt, to avoid flatten in the intersection
-          game.fallenShapes.push(droppedShape)
-          game.dropShapeNotification(droppedShape)
-          game.currentShape = nextShapeMaker();
+      var canFall = true
+      while(canFall) {
+        var fallenShape = sb.fall(g.copy(game.currentShape))
+        canFall = shapeValidPositionInGame(game, fallenShape)
+        if(canFall) {
+            game.currentShape = fallenShape;
+        } else {
+            // put color into each block!!
+            var droppedShape = g.copy(game.currentShape)
+            // TODO make fallen shapes flatt, to avoid flatten in the intersection
+            game.fallenShapes.push(droppedShape)
+            game.dropShapeNotification(droppedShape)
+            game.currentShape = nextShapeMaker();
+        }
+        canFall = canFall && repeat
       }
       return game
     }
@@ -136,13 +140,18 @@ $(document).ready( function() {
     				      }
     }
 
-    game.dropShapeObeservers.push(function(shape) {
+    game.dropShapeObeservers.push(function drawPitchedSahpes(shape) {
       drawShapeAt($pitchedShapes, shape, shape.color)
     })
 
+    game.dropShapeObeservers.push(function dropCompletedBottomRow(shape) {
+      drawShapeAt($pitchedShapes, shape, shape.color)
+    })
+
+
     var nextShapeMaker = randomShape(shapes)
 
-    var nextTick = tick(nextShapeMaker)
+    var nextTick = tick(nextShapeMaker, false)
     var updateQueue = [function(game) {
         game.currentShape = nextShapeMaker()
         return game
@@ -204,25 +213,7 @@ $(document).ready( function() {
             frame.start()
         }
         if ( event.which == 40 /*fall*/ ) {
-            updateQueue.push( function(game) {
-              var canFall = true
-                while(canFall) {
-                  var fallenShape = sb.fall(g.copy(game.currentShape))
-                  var canFall = shapeValidPositionInGame(game, fallenShape)
-                  if(canFall) {
-                      game.currentShape = fallenShape;
-                  } else {
-                      // put color into each block!!
-                      var droppedShape = g.copy(game.currentShape)
-                      // TODO make fallen shapes flatt, to avoid flatten in the intersection
-                      game.fallenShapes.push(droppedShape)
-                      game.dropShapeNotification(droppedShape)
-                      game.currentShape = nextShapeMaker();
-                  }
-                }
-                return game
-            }
-            )
+            updateQueue.push( tick(nextShapeMaker, true))
         }
         if ( event.which == 37 /*left*/ ) {
             updateQueue.push(maybeTransformCurrentShape(sb.moveL))

@@ -1,4 +1,8 @@
+WORK
+- remove completed rows
+
 TODO
+- color bug
 - refactor drop function, mitigate code doubling with tick Funtion, make it reusable for collisions
 - restart function
 - get rid of jQuery use plain DOM
@@ -15,8 +19,6 @@ TODO
 - make noises
 - play background music
 
-WORK
-- remove completed rows
 
 DONE
 - replace setInterval ba requestAnimationFrame
