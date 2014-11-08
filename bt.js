@@ -4,108 +4,90 @@ var sb = require("./shapeBuilders.js")
 var assert = require('assert')
 
 
-var shape = sb.L("red")
-var clone = g.copy(shape)
-
-var block1 = {x:'1', y:'1'}
-var block2 = {x:'1', y:'1'}
-var block3 = {x:'2', y:'1'}
-var block4 = {x:'2', y:'2'}
-var block5 = {x:'3', y:'2'}
-var block6 = {x:'4', y:'5'}
-var block7 = {x:'5', y:'6'}
-var shape = [block2, block3]
-var shape2 = [block2, block4]
-var shape3 = [block5, block4]
-var shape4 = [block6, block7]
-var array_of_shapes = [shape2,shape3]
-
-// console.log(flatten(array_of_shapes))
-
-assert.deepEqual(g.flatten(array_of_shapes),fn.concat(block2,block4,block5,block4))
-
-assert(g.equal2D(block1,block2))
-assert.notEqual(g.equal2D(block1,block3))
-
-assert(g.contains(g.equal2D, shape, block2))
-assert.notEqual(g.contains(g.equal2D, shape, block4))
-
-assert(g.intersect(g.equal2D, shape, shape2))
-assert(g.intersect(g.equal2D, shape2, shape))
-assert(g.intersect(g.equal2D, shape, block2))
-assert(g.intersect(g.equal2D, shape, block1))
-assert.notEqual(g.intersect(g.equal2D, shape3, shape2))
-assert.notEqual(g.intersect(g.equal2D, shape3, shape))
-
-assert.notEqual(sb.intersect(array_of_shapes, shape4))
-// console.log(array_of_shapes)
-// console.log(shape)
-assert(sb.intersect(array_of_shapes, shape))
-
-assert.deepEqual(block1,block2)
-assert.notDeepEqual(block1,block3)
-
-
-// Development, check full row
-var empty = []
-var lastRowIncomple = sb.shapeBuilder([ [1],
-                              [0],
-                              [1,-1,0,1,1],
-                              [1,1]])("color")
-var lastRowFilled = sb.shapeBuilder([ [1],
-                              [1,-1,1,1,1]])("color")
-
-var gausSum = g.gausSum
-
-var rowSums = function rowSums(field) { return fn.reduce( function(accu, val ) {
-    var valX = val.x  + 1
-    if( accu[val.y] ) {
-      accu[val.y] += valX
-    } else {
-      accu[val.y] = valX
+var field = (function field(width, height) {
+  var w = width
+  var h = height
+  var arr = [width*height]
+  this.get = function(x,y) {
+    return arr[y*w + x]
+  }
+  this.set = function(x,y,v) {
+    if( x >= 0 && x < w && y >= 0 && y < h) {
+      arr[y*w + x] = v
     }
-    return accu
-  }, [], field)
+    return this
+  }
+  this.width = w
+  this.height = h
+  return this
+})(10,20)
+
+field.set(0,0,"hallo")
+assert(field.get(0,0) === "hallo")
+field.set(3,4,"roland")
+assert(field.get(3,4) === "roland")
+field.get(100,100)
+
+
+var renderFunction = function(w) {
 }
 
-assert(rowSums(lastRowFilled)[1] === gausSum(5))
-assert(rowSums(lastRowIncomple)[3] !== gausSum(5))
-assert(rowSums(lastRowIncomple)[3] === 3)
-assert(rowSums(empty)[0] !== gausSum(5))
+var renderWorld = fn.curry(function(renderFunction, w) {
+  renderFunction(w)
+  console.log("render", w.get(1,1))
+  return w
+})
 
-//+ lastRowComplete :: (handler :: n -> field-> field)-> field -> field
-var lastRowComplete = fn.curry(
-  function lastRowComplete(handler, maxColNumber, field) {
-    var rowSumsArr = rowSums(field)
-    var lastRow = rowSumsArr.length - 1
-    if( lastRow > 0 ) {
-      if( rowSumsArr[lastRow] == gausSum(maxColNumber) ) {
-        return handler(lastRow, field)
-      }
-    }
-    return field
+var simulateWorld = function(w) {
+  console.log("simulate", w.get(1,1))
+  return w
+}
+
+var performEvents = fn.curry(function(world, eventQueue) {
+  return fn.reduce(applyEvent, world, eventQueue)
+})
+
+var applyEvent = function applyEvent(world, event) {
+  return eventHandler[event](world)
+}
+
+var eventHandler = {
+  "newShape" : function newShape(world) {
+    return world
+  },
+  "tick" : function tick(world) {
+    world.set(1,1,"tick")
+    return world
+  },
+  "left" : function left(world) {
+    world.set(2,2,"left")
+    return world
+  },
+  "right" : function right(world) {
+    return world
+  },
+  "rotL" :function rotL(world) {
+    return world
+  },
+  "rotR" : function rotR(world) {
+    return world
+  },
+  "drop" :function drop(world) {
+    return world
   }
-)
+}
 
-assert.deepEqual(lastRowComplete(
-  function(n,field){
-    return fn.filter(function(block) {
-      return block.y !== n
-    }, field)
-  }, 5, lastRowFilled), [ { x: 0, y: 0, center: false, color: 'color' } ])
+var world = field
 
-assert.deepEqual(lastRowComplete(
-  function(n,field){
-    return fn.filter(function(block) {
-      return block.y !== n
-    }, field)
-  }, 5, lastRowIncomple), lastRowIncomple)
+var gameLoop = fn.compose(renderWorld(renderFunction), simulateWorld, performEvents(world))
 
-assert.deepEqual(lastRowComplete(
-  function(n,field){
-    return fn.filter(function(block) {
-      return block.y !== n
-    }, field)
-  }, 5, empty), empty)
+gameLoop(["tick"])
+gameLoop(["left"])
+
+console.log("GAME1", world.get(1,1))
+console.log("GAME2", world.get(2,2))
+
+
+fn.compose(g.trace("test"), function(a,b) {return a +"/" + b})("hallo", "world")
 
 console.log("--------------------------------------------")
