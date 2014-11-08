@@ -34,34 +34,61 @@ function World(cols, rows) {
     }
 
     var shape = randomShape()
+    var fallenShapes = []
+
+
+
+      // + inGameField :: block -> bool
+      var inGameField = function(block) {
+        return g.inRect(0, 0, cols, rows, block.x, block.y)
+      }
+
+      //+ notInGameField :: a -> bool
+      var notInGameField = fn.compose(g.not, inGameField)
+
+      var shapeOutOfField = function(shape){return fn.filter(notInGameField, shape).length !== 0 }
+
+      var shapeValidPositionInGame = function(shape) {
+        return !shapeOutOfField(shape) && !sb.intersect( fallenShapes, shape )
+      }
+
+      var maybeTransformCurrentShape = fn.curry(function(transformFn, shape) {
+        var transformedShape = transformFn(shape)
+        if( shapeValidPositionInGame(transformedShape)) {
+          return transformedShape
+        } else {
+            return shape
+        }
+      })
+
 
     // shape movement in the world
     var moveShapeDown = function(world) {
-      shape = sb.fall(shape)
+      shape = maybeTransformCurrentShape(sb.fall)(shape)
       return world
     }
 
     // shape movement in the world
     var moveShapeLeft = function(world) {
-      shape = sb.moveL(shape)
+      shape = maybeTransformCurrentShape(sb.moveL)(shape)
       return world
     }
 
     // shape movement in the world
     var moveShapeRight = function(world) {
-      shape = sb.moveR(shape)
+      shape = maybeTransformCurrentShape(sb.moveR)(shape)
       return world
     }
 
     // shape movement in the world
     var rotShapeLeft = function(world) {
-      shape = sb.rotLShape(shape)
+      shape = maybeTransformCurrentShape(sb.rotLShape)(shape)
       return world
     }
 
     // shape movement in the world
     var rotShapeRight = function(world) {
-      shape = sb.rotRShape(shape)
+      shape = maybeTransformCurrentShape(sb.rotRShape)(shape)
       return world
     }
 
