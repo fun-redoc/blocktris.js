@@ -1,5 +1,5 @@
 
-var fn = require("fn.js")
+var fn = require("frameworks/fn.js")
 
 
 var makeBlocks = fn.memoize(function(a) {

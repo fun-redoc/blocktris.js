@@ -1,6 +1,10 @@
 // Main
+var BlockSize = 20
 var GameFieldPosX = 20
 var GameFieldPosY = 20
+var GameFieldRows = 20
+var GameFieldCols = 10
+
 
 var $panel
 var $currentShapeLaver
