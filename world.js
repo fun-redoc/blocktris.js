@@ -1,4 +1,4 @@
-function World(cols, rows) {
+function World(cols, rows, aFallenShapeDelegate) {
 
     var field = (function field(width, height) {
       var w = width
@@ -33,6 +33,9 @@ function World(cols, rows) {
         return shapes[g.rnd(mod)]
     }
 
+    var fallenShapeDelegate = aFallenShapeDelegate || function() {}
+
+
     var shape = randomShape()
     var fallenShapes = []
 
@@ -61,12 +64,33 @@ function World(cols, rows) {
         }
       })
 
+    var copyShapeToField = function(f,s) {
+        fn.each(function(b) {
+            f.set(b.x,b.y,b.color)
+        }, s)
+    }
+
 
     // shape movement in the world
-    var moveShapeDown = function(world) {
-      shape = maybeTransformCurrentShape(sb.fall)(shape)
-      return world
-    }
+    var moveShapeDown = fn.curry(function(repeat, world) {
+        var canFall = true
+        // TODO instead of active fall in better use an animation which works async
+        while(canFall) {
+          var fallenShape = sb.fall(g.copy(shape))
+          canFall = shapeValidPositionInGame(fallenShape)
+          if(canFall) {
+              shape = fallenShape;
+          } else {
+              var droppedShape = g.copy(shape)
+              fallenShapes = fallenShapes.concat(droppedShape)
+              copyShapeToField(field,droppedShape)
+              fallenShapeDelegate(shape, droppedShape)
+              shape = randomShape();
+          }
+            canFall = canFall && (repeat || false)
+        }
+        return world
+    })
 
     // shape movement in the world
     var moveShapeLeft = function(world) {
@@ -98,15 +122,12 @@ function World(cols, rows) {
         shape = randomShape()
         return world
       },
-      "tick" : moveShapeDown,
+      "tick" : moveShapeDown(false),
       "left" : moveShapeLeft,
       "right" : moveShapeRight,
       "rotL" : rotShapeLeft,
       "rotR" : rotShapeRight,
-      "drop" :function drop(world) {
-        console.log("drop")
-        return world
-      }
+      "drop" : moveShapeDown(true)
     }
 
     World.prototype.applyEvent = fn.curry(function applyEvent(world, event) {
@@ -114,6 +135,8 @@ function World(cols, rows) {
     })
 
     World.prototype.shape = function() { return shape }
+    World.prototype.field = function() { return field }
+
 
     return this;
 }

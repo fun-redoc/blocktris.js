@@ -37,12 +37,12 @@ function updateSpriteByShape($panel, shape) {
 }
 
 
-var renderFunction = function renderFunction($panel) {
+var renderFunction = function renderFunction() {
   return function render(world) {
-      if($panel.children().size() <= 0) {
-        drawShapeAt($panel, world.shape(), world.shape().color)
+      if($currentShapeLaver.children().size() <= 0) {
+        drawShapeAt($currentShapeLaver, world.shape(), world.shape().color)
       } else {
-        updateSpriteByShape($panel, world.shape())
+        updateSpriteByShape($currentShapeLaver, world.shape())
       }
   }
 }

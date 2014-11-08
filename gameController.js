@@ -62,9 +62,13 @@ var tick = function(intervalLength) {
 
 var gameLoop = function() {
   var registerTickEvent = tick(1000)
-  var world = new World(GameFieldCols, GameFieldRows)
+  var world = new World(GameFieldCols, GameFieldRows,
+                        function(startShape, dropShape) {
+                            // TODO animante transition
+                            drawShapeAt($pitchesShapesLayer, dropShape, dropShape.color)
+                        })
   return function(events,dt) {
     registerTickEvent(dt)
-    world = fn.compose(renderWorld(dt,renderFunction($currentShapeLaver)), simulateWorld(dt), performEvents(dt))(world, events)
+    world = fn.compose(renderWorld(dt,renderFunction()), simulateWorld(dt), performEvents(dt))(world, events)
   }
 }
