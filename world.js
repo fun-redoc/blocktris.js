@@ -1,4 +1,4 @@
-function World(cols, rows, aFallenShapeDelegate) {
+function World(cols, rows, enqueue, fallenShapeDelegate, moveSprite, removeFromView) {
 
     var field = (function field(width, height) {
       var w = width
@@ -33,11 +33,9 @@ function World(cols, rows, aFallenShapeDelegate) {
         return shapes[g.rnd(mod)]
     }
 
-    var fallenShapeDelegate = aFallenShapeDelegate || function() {}
-
-
     var shape = randomShape()
     var fallenShapes = []
+    
 
 
 
@@ -64,10 +62,96 @@ function World(cols, rows, aFallenShapeDelegate) {
         }
       })
 
-    var copyShapeToField = function(f,s) {
+    var copyShapeToField = function(s) {
         fn.each(function(b) {
-            f.set(b.x,b.y,b.color)
+            field.set(b.x,b.y,b.color)
         }, s)
+    }
+    
+    
+var rowSums = function rowSums(field) { return fn.reduce( function(accu, val ) {
+    var valX = val.x  + 1
+    if( accu[val.y] ) {
+      accu[val.y] += valX
+    } else {
+      accu[val.y] = valX
+    }
+    return accu
+  }, [], field)
+}
+
+//+ someRowComplete :: (removeHandler :: block -> void) -> (moveHandler :: block -> block -> void) -> field -> field
+var someRowComplete = fn.curry(
+  function someRowComplete(removeHandler, moveHandler, maxColNumber, field) {
+    // IDEA: sum of als Blocks x coordinates [1..maxColNumber] must be sum(1..MaxColNumber) otherwise the row is not complettly filled
+    var rowSumsArr = rowSums(field)
+    var expectedRowSum = g.gausSum(maxColNumber)
+    var dropRowsNecessary = false
+    var droppedRows = fn.map( function(v) {
+      if( v === expectedRowSum ) {
+        dropRowsNecessary = true
+        return true
+      }
+      return false
+    }, rowSumsArr)
+    
+    if(!dropRowsNecessary) return field
+
+    var rowsToDrop =
+      fn.compose(
+          fn.reverse,
+//		      g.trace("afer get"),
+		      g.get("movesPerRow"),
+//		      g.trace("after reduce"),
+              g.reduce(function(a,v,i) {
+                   a.movesPerRow[i] = a.maxMoves
+                   if(v) {a.maxMoves++}
+                   return a
+              },{movesPerRow:[], maxMoves:0 }),
+//          g.trace("bevore reduce"),
+          fn.reverse)(droppedRows)
+
+    var fieldWithHoles = fn.filter(
+      function(block) {
+        var row = block.y
+        if( rowSumsArr[row] === expectedRowSum ) {
+          removeHandler(block)
+          return false
+        }
+        return true
+      }, field )
+    
+      var fieldWithHolesSortedDescendingByRow = fieldWithHoles.sort( function(b1,b2) {
+          if( b1.y > b2.y ) return -1
+          if( b1.y < b2.y ) return 1
+          return 0
+      })
+    
+      var shrunkField = fn.reduce(
+        function(a,v,i) {
+          var row = v.y
+          var rowsToMove = rowsToDrop[row] || 0
+          var blockToMove = g.copy(v)
+          blockToMove.y += rowsToMove
+          if( rowsToMove > 0 ) {
+            var $div = moveHandler(v,blockToMove)
+//            debugWhenDivAndBlockDiffer($div, blockToMove)
+          }
+          return a.concat(blockToMove)
+        }, [], fieldWithHolesSortedDescendingByRow)
+
+      return shrunkField
+})
+    
+    
+    var shrinkField = function(world) {
+        var lastRowComplete = someRowComplete(removeFromView,
+                                            moveSprite,
+                                            cols,
+                                            fallenShapes)
+        fallenShapes = lastRowComplete
+        checkConsistency(world)
+        return world
     }
 
 
@@ -83,11 +167,12 @@ function World(cols, rows, aFallenShapeDelegate) {
           } else {
               var droppedShape = g.copy(shape)
               fallenShapes = fallenShapes.concat(droppedShape)
-              copyShapeToField(field,droppedShape)
-              fallenShapeDelegate(shape, droppedShape)
+              copyShapeToField(droppedShape)
+              fallenShapeDelegate(shape, droppedShape);
+              world = shrinkField(world); 
               shape = randomShape();
           }
-            canFall = canFall && (repeat || false)
+          canFall = canFall && (repeat || false)
         }
         return world
     })
@@ -130,12 +215,19 @@ function World(cols, rows, aFallenShapeDelegate) {
       "drop" : moveShapeDown(true)
     }
 
+    World.prototype.handlerForEvent = function(evt) {
+        return eventHandler[evt]
+    }
+    
     World.prototype.applyEvent = fn.curry(function applyEvent(world, event) {
-        return eventHandler[event](world)
+        return World.prototype.handlerForEvent(event)(world)
     })
 
     World.prototype.shape = function() { return shape }
     World.prototype.field = function() { return field }
+    World.prototype.getFallenShapes = function() {
+        return fallenShapes
+    }
 
 
     return this;

@@ -10,7 +10,7 @@ var simulateWorld = fn.curry(function(dt,w) {
 })
 
 var performEvents = fn.curry(function(dt, world, eventQueue) {
-  return fn.reduce(world.applyEvent, world, eventQueue)
+  return fn.reduce(function(accuWorld, eventHandler) { return eventHandler(accuWorld) } , world, eventQueue)
 })
 
 var gameController = (function() {
@@ -38,8 +38,9 @@ var gameController = (function() {
                 dt = now - (time || now);
                 time = now;
 
-                updateFunction(events, dt)
+                var eventsToExecute = g.copy(events)
                 events = []
+                updateFunction(eventsToExecute, dt)
 
              }
              update()
@@ -54,21 +55,27 @@ var tick = function(intervalLength) {
     if(interval < intervalLength) {
       interval += dt
     } else {
-      gameController.registerEvent("tick")
+      gameController.registerEvent(World.prototype.handlerForEvent("tick"))
       interval = 0
     }
   }
 }
 
+
 var gameLoop = function() {
   var registerTickEvent = tick(1000)
   var world = new World(GameFieldCols, GameFieldRows,
+                        gameController.registerEvent,
                         function(startShape, dropShape) {
                             // TODO animante transition
                             drawShapeAt($pitchesShapesLayer, dropShape, dropShape.color)
-                        })
+                            checkConsistency(world)
+                        },
+                       moveSprite($pitchesShapesLayer)    ,
+                       removeFromView($pitchesShapesLayer))
   return function(events,dt) {
     registerTickEvent(dt)
-    world = fn.compose(renderWorld(dt,renderFunction()), simulateWorld(dt), performEvents(dt))(world, events)
+    world = fn.compose(checkConsistency, renderWorld(dt,renderFunction()), simulateWorld(dt), performEvents(dt))(world, events)
+    
   }
 }

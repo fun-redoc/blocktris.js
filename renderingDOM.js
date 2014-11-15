@@ -28,13 +28,34 @@ var positionBlock = fn.curry(function($div,x,y) {
   // return $div.offset({ top: y*BlockSize, left: x*BlockSize })
 })
 
-function updateSpriteByShape($panel, shape) {
+var updateSpriteByShape = function updateSpriteByShape($panel, shape) {
   $panel.children().each(function(idx) {
     positionBlock($(this), shape[idx].x,shape[idx].y)
     $(this).attr("col", shape[idx].x).attr("row", shape[idx].y)
   })
   return $panel
 }
+
+
+var moveSprite = fn.curry(function moveSprite($panel, fromBlock, toBlock) {
+    var col = fromBlock.x
+    var row = fromBlock.y
+    $div = $("div[row=" + row + "][col=" + col + "]")
+    if(!$div) debugger
+    positionBlock($div, toBlock.x, toBlock.y)
+    $div.attr("row", toBlock.y).attr("col",toBlock.x)
+    // TODO some animation (fly away in random direction - ballistically)
+    return $div
+})
+
+
+  var removeFromView = fn.curry(function removeFromView($pitchedShapesView, block) {
+      var col = block.x
+      var row = block.y
+      $div = $("div[row=" + row + "][col=" + col + "]")
+      // TODO some animation (fly away in random direction - ballistically)
+      $div.remove()
+  })
 
 
 var renderFunction = function renderFunction() {
