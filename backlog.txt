@@ -1,7 +1,10 @@
 WORK
-- remove completed rows
+- count points, level * rowNumber 
 
 TODO
+- game over
+- new game
+- next level
 - color bug
 - refactor drop function, mitigate code doubling with tick Funtion, make it reusable for collisions
 - restart function
@@ -10,16 +13,16 @@ TODO
 - try out position:fixes or position:relative
 - drop on contact with dropped blocks
 - animate removal
-- count points
-- next level
 - high scores
-- game over
 - make blocks look better either css or images
 - allow for backgrounds
 - make noises
 - play background music
-
+- show next shape on the side panel
+- high scorey at apple play and google?
+- renderFunction, avoid repaint when nothing changed
 
 DONE
+- remove completed rows
 - replace setInterval ba requestAnimationFrame
 - drop on space ( arrow down)

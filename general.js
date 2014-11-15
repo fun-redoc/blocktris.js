@@ -179,6 +179,20 @@ g.copy = function copy(origin) {
 
   g.reduce = fn.curry(function (handler, accumulator, collection) { return fn.reduce(handler, accumulator, collection) })
 
+  g.map2 = function map2(fn, a1,a2) {
+    if( a1.length > a2.length) {
+        return a1.map( function (o,i) {
+            return fn(o, a2[i])
+        })
+    } else {
+        return a2.map( function (o,i) {
+            return fn(a1[i], o)
+        })
+    }
+
+}
+
+
 // RETURN public object
 return g;
 }));

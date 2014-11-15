@@ -4,12 +4,8 @@ var renderWorld = fn.curry(function(dt,renderFunction, w) {
   return w
 })
 
-var simulateWorld = fn.curry(function(dt,w) {
-  // console.log("simulate")
-  return w
-})
 
-var performEvents = fn.curry(function(dt, world, eventQueue) {
+var simulateWorld = fn.curry(function(dt, world, eventQueue) {
   return fn.reduce(function(accuWorld, eventHandler) { return eventHandler(accuWorld) } , world, eventQueue)
 })
 
@@ -64,18 +60,10 @@ var tick = function(intervalLength) {
 
 var gameLoop = function() {
   var registerTickEvent = tick(1000)
-  var world = new World(GameFieldCols, GameFieldRows,
-                        gameController.registerEvent,
-                        function(startShape, dropShape) {
-                            // TODO animante transition
-                            drawShapeAt($pitchesShapesLayer, dropShape, dropShape.color)
-                            checkConsistency(world)
-                        },
-                       moveSprite($pitchesShapesLayer)    ,
-                       removeFromView($pitchesShapesLayer))
+  var world = new World(GameFieldCols, GameFieldRows)
   return function(events,dt) {
     registerTickEvent(dt)
-    world = fn.compose(checkConsistency, renderWorld(dt,renderFunction()), simulateWorld(dt), performEvents(dt))(world, events)
+    world = fn.compose(checkConsistency, renderWorld(dt,renderFunction()), simulateWorld(dt))(world, events)
     
   }
 }

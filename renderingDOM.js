@@ -41,7 +41,6 @@ var moveSprite = fn.curry(function moveSprite($panel, fromBlock, toBlock) {
     var col = fromBlock.x
     var row = fromBlock.y
     $div = $("div[row=" + row + "][col=" + col + "]")
-    if(!$div) debugger
     positionBlock($div, toBlock.x, toBlock.y)
     $div.attr("row", toBlock.y).attr("col",toBlock.x)
     // TODO some animation (fly away in random direction - ballistically)
@@ -64,6 +63,22 @@ var renderFunction = function renderFunction() {
         drawShapeAt($currentShapeLaver, world.shape(), world.shape().color)
       } else {
         updateSpriteByShape($currentShapeLaver, world.shape())
+      }
+
+      var fallenShapes = world.getFallenShapes()
+      if(fallenShapes.length > 0 ) {
+          g.map2( function(block, $div) {
+              if( !block ) {
+                  $($div).remove() // possibly $($div)
+              }
+              if( !$div ) {
+                  $pitchesShapesLayer.append( blockAt(block.x, block.y, block.color, '.'))
+              }
+              if( $div && block ) {
+                positionBlock($($div), block.x, block.y)
+                $($div).attr("row", block.y).attr("col",block.x)
+              }
+          }, fallenShapes, $pitchesShapesLayer.children().toArray())
       }
   }
 }
