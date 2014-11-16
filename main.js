@@ -6,6 +6,7 @@ var GameFieldRows = 20
 var GameFieldCols = 10
 var gameFieldRatio = 0.8
 
+var dblTapFlipRunning = true
 
 var $panel
 var $currentShapeLaver
@@ -72,9 +73,34 @@ $(document).ready( function() {
 
   $( window ).resize(resizeGame)
   
-  $("body").on("tap", function() {
+  $(window).on("swipedown", function(e,data) {
       gameController.registerEvent(World.prototype.handlerForEvent("drop"))
+      e.preventDefault()  
   })
+  $(window).on("swipeleft", function(e,data) {
+      gameController.registerEvent(World.prototype.handlerForEvent("left"))
+      e.preventDefault()  
+  })
+  $(window).on("swiperight", function(e,data) {
+      gameController.registerEvent(World.prototype.handlerForEvent("right"))
+      e.preventDefault()  
+  })
+  $(window).on("tap", function(e,data) {
+      gameController.registerEvent(World.prototype.handlerForEvent("rotR"))
+      e.preventDefault()  
+  })
+  $(window).on("dbltap", function(e,data) {
+      if(dblTapFlipRunning) { 
+        gameController.stop()
+        dblTapFlipRunning = false
+      } else {
+        gameController.continue()
+        dblTapFlipRunning = true
+      }
+      e.preventDefault()  
+  })
+
+
 
   $(document).keydown(function( event ) {
     //console.log(event.which)
