@@ -2,6 +2,7 @@ WORK
 - count points, level * rowNumber 
 
 TODO
+- handles for use on touch devices
 - game over
 - new game
 - next level

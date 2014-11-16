@@ -57,13 +57,34 @@ var tick = function(intervalLength) {
   }
 }
 
+function Scoring() {
+    var level = 1
+    var points = 0
 
+    var countPoints = function countPoints(completedRows) {
+        points = completedRows.reduce( function(a,v) {
+            return a + v*level
+        }, points )
+    }
+
+    Scoring.prototype.countPoints = countPoints
+    Scoring.prototype.getLevel = function() {
+        return level
+    }
+    Scoring.prototype.getPoints = function() {
+        return points
+    }
+    Scoring.prototype.nextLevel = function() {
+        level += 1
+    }
+}
 var gameLoop = function() {
   var registerTickEvent = tick(1000)
-  var world = new World(GameFieldCols, GameFieldRows)
+  var scoring = new Scoring()
+  var world = new World(GameFieldCols, GameFieldRows, scoring.countPoints)
   return function(events,dt) {
     registerTickEvent(dt)
     world = fn.compose(checkConsistency, renderWorld(dt,renderFunction()), simulateWorld(dt))(world, events)
-    
+//    renderScoring(scoring)
   }
 }

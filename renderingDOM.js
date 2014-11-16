@@ -81,4 +81,9 @@ var renderFunction = function renderFunction() {
           }, fallenShapes, $pitchesShapesLayer.children().toArray())
       }
   }
+
+}
+
+var renderScoring = function(scoring) {
+  console.log("LEVEL ", scoring.getLevel(), " POINTS ", scoring.getPoints())
 }

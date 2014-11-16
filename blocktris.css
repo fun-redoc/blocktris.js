@@ -1,8 +1,32 @@
-.block {
+body {
+    padding-top: 0px;
+    padding-left: 0px;
+  margin-left: 5px;
+  margin-top: 5px;
+  background-color:lightgray;
+}
+
+div {
+    position: absolute;
+}
+
+.scoreContent {
+    padding-left: 10px;
+    padding-top: 10px;
+}
+
+div.block {
     position: absolute;
     text-align:center;
     vertical-align: middle;
+    float: none
 }
+
 div#panel {
   background-color:gray;
 }
+
+div#scoreView {
+    background-color:yellow;
+}
+

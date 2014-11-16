@@ -6,12 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Block Tris JS</title>
     <link rel="stylesheet" href="blocktris.css">
-    <style>
-      body {
-        padding-top: 10px;
-        padding-left: 10px;
-      }
-    </style>
     <!-- Frameworks -->
     <script type="text/javascript" src="frameworks/jquery-2.1.1.min.js"></script>
     <script type="text/javascript" src="frameworks/fn.js"></script>
@@ -30,9 +24,15 @@
 -->
   </head>
   <body>
-    <div id="panel">
-      <div id="currentShape"></div>
-      <div id="pitchedShapes"></div>
-    </div>
-  </</body>
+        <div id="panel">
+            <div id="currentShape"></div>
+            <div id="pitchedShapes"></div>
+        </div>
+        <div id="scoreView">
+            <label for="level" class="scoreContent">Level</label>
+            <p id="level" class="scoreContent">1</p>
+            <label for="score" class="scoreContent">Score</label>
+            <p id="score" class="scoreContent">0</p>
+        </div>
+  </body>
 </html>

@@ -1,14 +1,16 @@
 // Main
-var BlockSize = 20
-var GameFieldPosX = 20
-var GameFieldPosY = 20
+var BlockSize
+var GameFieldPosX
+var GameFieldPosY
 var GameFieldRows = 20
 var GameFieldCols = 10
+var gameFieldRatio = 0.8
 
 
 var $panel
 var $currentShapeLaver
 var $pitchesShapesLayer
+var $scoreLayer
 
 var debugWhenDivAndBlockDiffer = function($div, block) {
             if(!($div.attr("col") == block.x && $div.attr("row") == block.y)) debugger
@@ -41,16 +43,34 @@ var checkConsistency = function checkConsistency(world) {
     return world
 }
 
+var resizeGame = function() {
+      var width = $(window).width()
+      var height = $(window).height()
+
+      BlockSize = height * gameFieldRatio / GameFieldRows
+      $panel.width(BlockSize*GameFieldCols)
+        .height(BlockSize*GameFieldRows)
+//        .offset({ top: GameFieldPosY, left:GameFieldPosX} )
+
+      $scoreLayer
+        .height($panel.height())
+        .width(width*(1-gameFieldRatio))
+        .offset({left:GameFieldPosX + $panel.outerWidth()})
+}
 
 $(document).ready( function() {
+
   $panel = $("div#panel")
   $currentShapeLaver = $("div#currentShape")
   $pitchesShapesLayer = $("div#pitchedShapes")
+  $scoreLayer =$("div#scoreView")
 
-  $panel.width(BlockSize*GameFieldCols)
-        .height(BlockSize*GameFieldRows)
-        .offset({ top: GameFieldPosY, left:GameFieldPosX} )
+  GameFieldPosX = $("body").offset().left
+  GameFieldPosY = $("body").offset().top
 
+  resizeGame()
+
+  $( window ).resize(resizeGame)
 
   $(document).keydown(function( event ) {
     //console.log(event.which)

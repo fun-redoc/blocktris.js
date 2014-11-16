@@ -1,5 +1,5 @@
 //function World(cols, rows) {
-function World(cols, rows) {
+function World(cols, rows, countPoints) {
 
     //+ randomShape :: void -> shape
     var randomShape = function randomShape() {
@@ -60,7 +60,7 @@ var rowSums = function rowSums(field) { return fn.reduce( function(accu, val ) {
 
 //+ someRowComplete :: (removeHandler :: block -> void) -> (moveHandler :: block -> block -> void) -> field -> field
 var shrinkField = fn.curry(
-  function shrinkField(removeHandler, moveHandler, maxColNumber, field) {
+  function shrinkField(maxColNumber, field) {
     // IDEA: sum of als Blocks x coordinates [1..maxColNumber] must be sum(1..MaxColNumber) otherwise the row is not complettly filled
     var result = {shrunkField:[], movedBlocks:[], rowsToRemove: []}
 
@@ -141,11 +141,9 @@ var shrinkField = fn.curry(
           } else {
               var droppedShape = g.copy(shape)
               fallenShapes = fallenShapes.concat(droppedShape)
-              shrunkField = shrinkField(removeFromView,
-                                            moveSprite,
-                                            cols,
-                                            fallenShapes);
+              shrunkField = shrinkField(cols, fallenShapes);
               fallenShapes = shrunkField.shrunkField
+              countPoints(shrunkField.rowsToRemove)
               shape = randomShape();
           }
           canFall = canFall && (repeat || false)
