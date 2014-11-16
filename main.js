@@ -71,6 +71,10 @@ $(document).ready( function() {
   resizeGame()
 
   $( window ).resize(resizeGame)
+  
+  $("body").on("tap", function() {
+      gameController.registerEvent(World.prototype.handlerForEvent("drop"))
+  })
 
   $(document).keydown(function( event ) {
     //console.log(event.which)
